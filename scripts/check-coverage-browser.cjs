@@ -20,7 +20,7 @@ createRoot(document.getElementById('root')).render(location.pathname==='/studio'
 <ProfileDetails name="Test Studio" organization description="A Miami studio working with natural stone and courtyard homes." location="Miami" specialties={['Residential interiors']}/>
 <ProfileFeed userId="owner" initialItems={[item]}/></main>);`;
 async function build(){
-  await esbuild.build({stdin:{contents:entry,loader:'tsx',resolveDir:root},bundle:true,outfile:path.join(out,'bundle.js'),jsx:'automatic',alias:{'@':path.join(root,'src')},define:{'process.env.NODE_ENV':'"development"'},plugins:[{name:'framework-boundaries',setup(b){
+  await esbuild.build({stdin:{contents:entry,loader:'tsx',resolveDir:root},bundle:true,outfile:path.join(out,'bundle.js'),jsx:'automatic',alias:{'@':path.join(root,'src')},define:{'process.env.NODE_ENV':'"development"','process.env.NEXT_PUBLIC_FOLIO_EDITORIAL_PROFILE_HERO':'"false"'},plugins:[{name:'framework-boundaries',setup(b){
     b.onResolve({filter:/^next\/(navigation|link|image)$/},a=>({path:a.path,namespace:'fixture'}));
     b.onLoad({filter:/.*/,namespace:'fixture'},a=>({loader:'tsx',resolveDir:root,contents:a.path==='next/navigation'?`export const useRouter=()=>({push(){},replace(){},refresh(){}});export const useSearchParams=()=>new URLSearchParams();export const usePathname=()=>'/profile/owner';`:a.path==='next/link'?`import React from'react';export default({href,children,prefetch,...props})=><a href={href} {...props}>{children}</a>;`:`import React from'react';export default({fill,priority,unoptimized,quality,loader,...props})=><img {...props}/>;`}));
   }}]});
@@ -53,7 +53,7 @@ function handler(req,res){const url=new URL(req.url,'http://fixture');const json
 }
 (async()=>{await build();if(process.argv.includes('--build-only'))return console.log('PASS real coverage and import approval components bundle');const server=http.createServer(handler);await new Promise(r=>server.listen(process.argv.includes('--serve')?3111:0,'127.0.0.1',r));
   const base='http://127.0.0.1:'+server.address().port;if(process.argv.includes('--serve'))return console.log('Coverage review fixture: '+base);
-  let browser;try{browser=await require('puppeteer-core').launch({executablePath:process.env.GUIDED_TEST_BROWSER||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(10000);
+  let browser;try{browser=await require('puppeteer-core').launch({executablePath:process.env.GUIDED_TEST_BROWSER||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('Browser error:',e.message)});page.setDefaultTimeout(10000);
     await page.setRequestInterception(true);page.on('request',r=>r.url().startsWith(base)||r.url().startsWith('data:')?r.continue():r.abort());
     // A reload replaces the button after the fetch resolves. Locators re-resolve
     // the element and wait for a stable, enabled control before the real click.
