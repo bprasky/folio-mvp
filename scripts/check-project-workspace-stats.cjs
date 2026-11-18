@@ -37,7 +37,7 @@ const { getMyProjectsWithStats } = load('src/server/queries/getMyProjectsWithSta
 const ids = rows => rows.map(row => row.id).sort();
 async function main() {
   for (const id of ['owner', 'other']) await db.user.create({ data: { id, name: id, email: id + '@example.test', role: 'DESIGNER' } });
-  for (const id of ['firm', 'other-firm']) await db.organization.create({ data: { id, name: id, type: 'DESIGN_FIRM' } });
+  for (const id of ['firm', 'other-firm']) await db.organization.create({ data: { id, name: id, type: 'DESIGN_FIRM', status: 'CLAIMED', membersCanPublish: false } });
   await db.organizationUser.create({ data: { userId: 'owner', organizationId: 'firm', role: 'MEMBER', isActive: true } });
   for (const [id, designerOrgId, ownerId] of [
     ['imported', 'firm', 'owner'], ['empty', 'firm', 'owner'], ['hidden', 'firm', 'owner'],
@@ -60,6 +60,8 @@ async function main() {
   assert.equal(imported.imageCount, 19, 'saved photographs reach lifecycle classification');
   assert.equal(imported.coverUrl, 'https://fixture.invalid/0.png');
   assert.equal(imported.canDelete, false, 'member does not gain deletion rights from listing');
+  assert.equal(imported.canUnpublish, true, 'a firm member can withdraw after new posting is restricted');
+  assert.equal(imported.canPublish, false);
   const empty = listed.find(row => row.id === 'empty');
   assert.equal(empty.roomCount, 0);
   assert.equal(empty.imageCount, 0);
@@ -75,8 +77,18 @@ async function main() {
   assert.equal(db.calls.some(call => call.model === 'Project'), false, 'membership denial precedes project reads');
   console.log('PASS nonmember denial before project/count reads');
 
+  await db.organizationUser.create({ data: { userId: 'other', organizationId: 'firm', role: 'VIEWER', isActive: true } });
+  actor = 'other';
+  const viewerProject = (await getMyProjectsWithStats('firm')).find(row => row.id === 'imported');
+  assert.equal(viewerProject.canUnpublish, false);
+  assert.equal(viewerProject.canPublish, false);
+  actor = 'owner';
+  await db.organization.update({ where: { id: 'firm' }, data: { membersCanPublish: true } });
+  assert.equal((await getMyProjectsWithStats('firm'))[0].canPublish, true);
   const personal = await getMyProjectsWithStats();
   assert.deepEqual(ids(personal), ['personal'], 'personal context does not absorb firm-owned projects');
+  assert.equal(personal[0].canUnpublish, true);
+  assert.equal(personal[0].canPublish, false);
   assert.equal(personal[0].roomCount, 1);
   assert.equal(personal[0].imageCount, 0);
   console.log('PASS personal room-only project retains saved progress');

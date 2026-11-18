@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { getMyProjectsWithStats } from '@/server/queries/getMyProjectsWithStats';
 import { getPendingDeletionRequests } from '@/server/queries/getPendingDeletionRequests';
 import ProjectsPageClient from './ProjectsPageClient';
+import { unpublishPortfolioAction } from '@/app/actions/portfolio';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
     return (
       <ProjectsPageClient
         projectsRaw={projects}
+        unpublishAction={unpublishPortfolioAction}
         operatingAsOrgId={operatingAsOrgId}
         pendingDeletionRequests={pendingDeletionRequests}
       />

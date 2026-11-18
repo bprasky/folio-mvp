@@ -42,13 +42,21 @@ const params = new URLSearchParams(location.search);
 const user = JSON.parse(sessionStorage.getItem('fixture-user') || 'null');
 const access = {id:'fixture-firm', name:'Fixture Studio', type:'DESIGN_FIRM', canEditProfile:true, canImportProjects:true, canContribute:true};
 const firms = sessionStorage.getItem('fixture-membership') === '1' ? [{...access, membershipRole:'OWNER', location:null}] : [];
+const publicationProjects = params.has('publication') ? ['a', 'b'].map(id => ({
+  id, title: 'Imported ' + id, stage: 'complete', status: 'published', isPublic: true,
+  publishedAt: '2026-01-01', imageCount: 2, canPublish: true, canUnpublish: id === 'a',
+})) : [];
+const withdraw = async id => {
+  (window.withdrawals ||= []).push(id);
+  if (window.failWithdrawal) throw Error('Temporary failure');
+};
 const pathname = location.pathname;
 const view = pathname === '/auth/signup' ? <Signup/> :
   pathname === '/auth/verify-email' ? <VerifyEmail/> :
   pathname === '/auth/signin' ? <SigninForm showGoogle showApple/> :
   pathname === '/auth/org-setup' ? <main style={{maxWidth:480,margin:'auto',padding:24}}><ScenarioA initialIntent={params.get('type')} callbackUrl={params.get('callbackUrl') || '/settings'} account={user} memberships={firms} existingOnly={firms.length > 0}/></main> :
   pathname === '/onboarding/workspace' ? <WorkspaceImportClient access={access} memberships={[access]} history={[]} initialId={params.get('import') || (params.get('new') === '1' ? undefined : sessionStorage.getItem('fixture-import-id') || undefined)} available returnTo={params.get('returnTo') || sessionStorage.getItem('fixture-import-return-to') || '/projects/new'}/> :
-  pathname === '/projects' ? <main className="px-6"><Projects projectsRaw={[]} operatingAsOrgId={user?.operatingAsOrgId}/></main> :
+  pathname === '/projects' ? <main className="px-6"><Projects projectsRaw={publicationProjects} unpublishAction={withdraw} operatingAsOrgId={user?.operatingAsOrgId}/></main> :
   pathname === '/projects/new' ? <h1>Project upload boundary</h1> :
   pathname === '/onboarding/diagnostic' ? <h1>Browsing onboarding</h1> :
   pathname === '/about' ? <AboutPageContent/> : <><EditorialMasthead/><WelcomeModal/></>;
@@ -193,6 +201,34 @@ async function main() {
   const signin=async()=>{await page.type('#email','designer@example.test');await page.type('#password','FixturePassword123!');};
   try{
     await reset({...person,operatingAsOrgId:'fixture-firm'},true);
+    await go('/projects?publication=1');
+    const card = title => 'article[aria-label^="' + title + ',"]';
+    const openOptions = async title => {
+      await page.hover(card(title));
+      await page.click(card(title) + ' button[title="Project options"]');
+    };
+    await openOptions('Imported b');
+    assert.doesNotMatch(await page.$eval(card('Imported b'), el => el.innerText), /Unpublish/);
+    await openOptions('Imported a');
+    await clickText('Unpublish', 'button');
+    await page.waitForSelector('[role=dialog]');
+    assert.match(await page.$eval('[role=dialog]', el => el.innerText), /Imported a/);
+    await clickText('Keep public', 'button');
+    assert.equal(await page.evaluate(() => window.withdrawals?.length || 0), 0);
+    await openOptions('Imported a');
+    await clickText('Unpublish', 'button');
+    await page.evaluate(() => { window.failWithdrawal = true; });
+    await clickText('Unpublish project', 'button');
+    await page.waitForSelector('[role=dialog] [role=alert]');
+    assert.match(await page.$eval(card('Imported a'), el => el.getAttribute('aria-label')), /Published/);
+    await page.evaluate(() => { window.failWithdrawal = false; });
+    await clickText('Unpublish project', 'button');
+    await page.waitForSelector('article[aria-label^="Imported a, In progress"]');
+    assert.ok(await page.$('article[aria-label^="Imported b, Published"]'));
+    assert.deepEqual(await page.evaluate(() => window.withdrawals), ['a', 'a']);
+    await openOptions('Imported a');
+    assert.equal(await page.$eval(card('Imported a') + ' a[href*="publish=photos"]', el => el.getAttribute('href')), '/project/a?publish=photos');
+    results.push({journey:'withdraw one quick-published project, cancel, retry and review for republication',passed:true});
     const importHref=await (async()=>{await go('/projects');return page.evaluate(()=>[...document.querySelectorAll('header a')].find(a=>a.textContent.trim()==='Import')?.getAttribute('href'));})();
     assert.ok(importHref,'Import is an actionable link');
     const importUrl=new URL(importHref,url);assert.equal(importUrl.pathname,'/onboarding/workspace');assert.equal(importUrl.searchParams.get('orgId'),'fixture-firm');assert.equal(importUrl.searchParams.get('returnTo'),'/projects');assert.equal(importUrl.searchParams.has('new'),false,'Import resumes existing work');

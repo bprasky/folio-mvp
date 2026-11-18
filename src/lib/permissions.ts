@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { can, isOrgRole, canCreateFirmProject } from '@/lib/orgPermissions';
+import { can, isOrgRole, canCreateFirmProject, firmPostingGate } from '@/lib/orgPermissions';
 import type { Prisma } from '@prisma/client';
 
 export async function assertProjectAccess(params: {
@@ -478,14 +478,7 @@ export async function canPublishFromOrg(
         users: { where: { userId, isActive: true }, select: { role: true } },
       },
     });
-    if (!org) return { ok: false, reason: 'org_not_found' };
-    const membership = org.users[0];
-    if (!membership) return { ok: false, reason: 'not_a_member' };
-    if (org.status !== 'CLAIMED' && org.status !== 'PROFESSIONAL') return { ok: false, reason: 'org_unclaimed' };
-    if (!isOrgRole(membership.role) || !can(membership.role, 'publish_projects', org)) {
-      return { ok: false, reason: 'posting_restricted' };
-    }
-    return { ok: true };
+    return firmPostingGate(org, org?.users[0]?.role);
   }
 
   // User-scoped content: prefer the user's operatingAs context, otherwise
