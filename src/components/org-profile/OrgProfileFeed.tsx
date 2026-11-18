@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import FeedFilters from './FeedFilters';
-import GuidedSetupCard from './GuidedSetupCard';
 import AddRecognitionModal from './AddRecognitionModal';
-import InviteTeamModal from './InviteTeamModal';
 import FeedLayoutSystem from './feed-layout/FeedLayoutSystem';
 
 interface FeedItem {
@@ -16,13 +14,6 @@ interface FeedItem {
   engagement?: number;
 }
 
-interface SetupState {
-  profileComplete: boolean;
-  recognitionComplete: boolean;
-  teamInviteComplete: boolean;
-  firstProjectPublished: boolean;
-}
-
 interface OrgProfileFeedProps {
   initialItems?: FeedItem[];
   orgId: string;
@@ -31,7 +22,6 @@ interface OrgProfileFeedProps {
   isMember?: boolean;
   isAdmin?: boolean;
   projectCount?: number;
-  setupState?: SetupState;
 }
 
 export default function OrgProfileFeed({
@@ -42,7 +32,6 @@ export default function OrgProfileFeed({
   isMember = false,
   isAdmin = false,
   projectCount = 0,
-  setupState,
 }: OrgProfileFeedProps) {
   const [items, setItems] = useState<FeedItem[]>(initialItems || []);
   const [loading, setLoading] = useState(!initialItems);
@@ -51,7 +40,6 @@ export default function OrgProfileFeed({
   const [filter, setFilter] = useState(initialFilter);
   const [sort, setSort] = useState(initialSort);
   const [recognitionModalOpen, setRecognitionModalOpen] = useState(false);
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   useEffect(() => {
     if (initialItems && filter === initialFilter && sort === initialSort && attempt === 0) {
@@ -90,34 +78,23 @@ export default function OrgProfileFeed({
     return <LoadingSkeleton projectCount={projectCount} />;
   }
 
-  const showSetupCard = isMember && projectCount === 0 && setupState;
-
   return (
     <div>
-      <FeedFilters
+      {(items.length > 0 || filter !== 'all' || error) && <FeedFilters
         activeFilter={filter}
         activeSort={sort}
         orgId={orgId}
         isAdmin={isAdmin}
         onAddRecognition={() => setRecognitionModalOpen(true)}
-      />
+      />}
 
       {error ? <div className="py-12 text-center"><p role="alert" className="folio-body">{error}</p><button className="mt-3 min-h-11 px-4 folio-ui underline" onClick={() => setAttempt(value => value + 1)}>Try again</button></div> : items.length === 0 ? (
-        showSetupCard ? (
-          <GuidedSetupCard
-            orgId={orgId}
-            setupState={setupState}
-            onOpenRecognitionModal={() => setRecognitionModalOpen(true)}
-            onOpenInviteModal={() => setInviteModalOpen(true)}
-          />
-        ) : (
           <div className="text-center py-16" style={{ color: 'var(--org-page-muted, var(--folio-text-secondary))' }}>
-            <p>No content yet</p>
+            <p>{filter === 'all' ? 'No content yet' : 'No entries in this section yet'}</p>
             <p className="text-sm mt-2">
               Projects and media will appear here once published
             </p>
           </div>
-        )
       ) : (
         <FeedLayoutSystem
           items={items}
@@ -133,11 +110,6 @@ export default function OrgProfileFeed({
         orgId={orgId}
       />
 
-      <InviteTeamModal
-        open={inviteModalOpen}
-        onOpenChange={setInviteModalOpen}
-        orgId={orgId}
-      />
     </div>
   );
 }

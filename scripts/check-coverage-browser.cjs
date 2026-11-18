@@ -5,10 +5,16 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'.tmp/coverage-browse
 const entry=`import React from 'react';import{createRoot}from'react-dom/client';
 import{ImportPhotoApproval}from'./src/components/onboarding/ImportPhotoApproval';
 import{CoverageManager}from'./src/components/coverage/CoverageManager';
+import {StudioProfileTools} from './src/components/org-profile/StudioProfileTools';
+import OrgProfileHero from './src/components/org-profile/OrgProfileHero';
 import ProfileFeed from './src/components/profile/unified/ProfileFeed';
 import{ProfileDetails}from'./src/components/profile/ProfileDetails';
 const item={id:'public',type:'recognition',publishedAt:'2026-11-01',pinnedAt:null,engagement:0,data:{coverage:{id:'public',title:'A home shaped by its courtyard',source:'Design Journal',url:'https://press.example/story',category:'feature',publicationDate:'2026-10-01',project:null,imageUrl:null}}};
-createRoot(document.getElementById('root')).render(<main style={{maxWidth:1100,margin:'0 auto',padding:'24px'}}><header className="folio-h1">FOLIO</header>
+const org={id:'studio',name:'Courtyard Studio',type:'DESIGN_FIRM',description:'A residential design practice in Miami.',location:'Miami',specialties:[],serviceRegions:[],projectTypes:[]};
+const next={title:'Review your website import',description:'Choose which projects and photographs appear on your studio profile.',href:'/onboarding/workspace?import=fixture',action:'Open import'};
+const studio=<main style={{maxWidth:1100,margin:'0 auto',padding:'24px'}}><OrgProfileHero org={org} projectCount={0} year={2026} isMember/>
+  <StudioProfileTools orgId="studio" next={next} isAdmin canInvite/></main>;
+createRoot(document.getElementById('root')).render(location.pathname==='/studio' ? studio : <main style={{maxWidth:1100,margin:'0 auto',padding:'24px'}}><header className="folio-h1">FOLIO</header>
 <ImportPhotoApproval importId="fixture" onPublished={()=>{window.approvals=(window.approvals||0)+1}}/>
 <CoverageManager scope={{type:'organization',id:'studio'}} autoDiscover/>
 <ProfileDetails name="Test Studio" organization description="A Miami studio working with natural stone and courtyard homes." location="Miami" specialties={['Residential interiors']}/>
@@ -53,7 +59,15 @@ function handler(req,res){const url=new URL(req.url,'http://fixture');const json
     // the element and wait for a stable, enabled control before the real click.
     const click=async text=>{console.log('Click:',text);await page.locator('button::-p-text('+text+')').click()};
     for(const theme of ['light','dark'])for(const width of [390,1440]){
-      await page.setViewport({width,height:1000});await page.goto(base+'?reset=1&theme='+theme,{waitUntil:'networkidle0'});
+      await page.setViewport({width,height:1000});
+      await page.goto(base+'/studio?theme='+theme,{waitUntil:'networkidle0'});
+      await page.waitForSelector('a[href="/onboarding/workspace?import=fixture"]');
+      assert.equal(await page.$eval('details', element=>element.open),false);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+      await page.screenshot({path:path.join(out,'studio-'+theme+'-'+width+'.png'),fullPage:true});
+      await page.click('summary');
+      await page.waitForSelector('a[href="/org/studio/edit"]',{visible:true});
+      await page.goto(base+'?reset=1&theme='+theme,{waitUntil:'networkidle0'});
       // Local storage guards the background sweep across tabs and visits; explicit search remains available.
       await page.evaluate(()=>localStorage.clear());if(!searches){await click('Find & manage coverage');await click('Find my coverage');await page.click('[aria-label="Close coverage review"]')}
       await click('Add 2 projects to my profile');await page.waitForFunction(()=>document.body.textContent.includes('1 project is now visible'));

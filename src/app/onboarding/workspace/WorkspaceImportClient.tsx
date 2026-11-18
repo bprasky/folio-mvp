@@ -29,14 +29,8 @@ const counted = (count: number, noun: string) => `${count} ${noun}${count === 1 
 function ProjectDrafts({ projects, canReview, publishedIds }: { projects: ImportedProject[]; canReview: boolean; publishedIds: string[] }) {
   if (!projects.length) return null;
   return <section className="space-y-4"><h2 className="folio-h3">Your projects</h2><p className="folio-meta text-folio-text-secondary">Saved privately for you to review, refine, and publish when you’re ready.</p>{projects.map(project => {
-    const cover = project.photos.find(photo => photo.status === 'saved' && photo.savedUrl);
     const failed = project.photos.filter(photo => photo.status === 'failed').length;
     return <article key={project.url} className={`${styles.section} space-y-4`}>
-      {cover ? (
-        // Protected project photos require the viewer's session; load them directly.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={cover.savedUrl} alt={cover.alt || project.title} className="w-full h-48 object-cover rounded-lg" loading="lazy" />
-      ) : null}
       <div className="flex justify-between gap-3"><h3 className="folio-ui">{project.title}</h3><span className="folio-meta text-folio-text-secondary">{project.projectId && publishedIds.includes(project.projectId) ? 'On your profile' : 'Private'}</span></div>
       <p className="folio-meta text-folio-text-secondary">{counted(project.photos.filter(photo => photo.status === 'saved').length, 'photograph')} saved · Add photos to your profile; interview later for a Folio Feature</p>
       {project.error ? <p className="folio-meta">{project.error}</p> : null}
@@ -65,7 +59,6 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
   const [useLogo, setUseLogo] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const initialized = useRef<string>();
 
   useEffect(() => {
@@ -145,48 +138,18 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   const field = `${styles.field} mt-2`;
   const card = `${styles.section} space-y-4`;
   const run = review?.run;
-  const showPreview = !!review?.canReview && !!(review.projects.length || run?.profile.description || run?.profile.logo || run?.profile.bio);
-  return <ProfessionalSetupFrame stage="workspace" wide={showPreview}><div className="space-y-7">
-    {showPreview && review?.profile && run ? <WorkspaceReadyPreview profile={review.profile} personName={run.personName}
-      publicationActions={<ImportPhotoApproval importId={review.id} onPublished={() => setRefresh(value => value + 1)} />}
-      description={description} location={location} logo={useLogo ? run.profile.logo : review.business.logo} bio={bio} projects={review.projects} busy={busy} canContribute={review.access.canContribute}
-      onReviewDetails={() => setDetailsOpen(true)} onOpenProject={(projectId, action) => void continueToFolio(`/project/${encodeURIComponent(projectId)}${action === 'open' ? '?publish=photos' : `?view=media&step=tags&action=${action === 'schedule' ? 'import-doc' : 'tag-by-hand'}`}`)} /> : <>
-    <SetupProgress step={3} />
-    <div><p className="folio-meta text-folio-text-secondary mb-2">{access.name}</p>
-      <h1 className={styles.title}>{review?.canReview ? 'Your work, ready for you.' : id ? 'Your workspace is taking shape.' : 'Bring your work with you.'}</h1>
-      <p className="folio-body text-folio-text-secondary mt-3">{id ? 'Your progress is saved here. You can leave this page and come back at any time.' : 'Start with your website. We’ll find your work and bring it into Folio, ready for you to make it your own.'}</p>
-    </div></>}
+  const showPreview = !!review?.profile && review.canReview && !!(review.projects.length || run?.profile.description || run?.profile.logo || run?.profile.bio);
+  const controls = <div className={showPreview ? 'workspace-review-panel' : 'space-y-6'}>
     {error ? <p role="alert" className="auth-message auth-message--error">{error}</p> : null}
     {notice ? <p role="status" className="auth-message">{notice}</p> : null}
-    {!id ? <>
-      {memberships.length > 1 ? <label className={styles.label}>Business<select className={field} value={access.id} onChange={event => router.push(`/onboarding/workspace?orgId=${encodeURIComponent(event.target.value)}&new=1&returnTo=${encodeURIComponent(returnTo)}`)}>{memberships.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}</select></label> : null}
-      {!access.canContribute ? <p className="folio-body">Your business access is view only. Ask a business admin for permission to contribute.</p> : !available ? <p className="folio-body">Website imports aren’t available yet. You can add your business details and projects manually.</p> : <form onSubmit={start} className="space-y-6">
-        <label className={styles.label}>Business website<input className={field} type="text" inputMode="url" autoComplete="url" required maxLength={2048} value={website} onChange={event => setWebsite(event.target.value)} placeholder="yourstudio.com" /></label>
-        <fieldset className="import-choices"><legend className="folio-ui">What would you like to bring over?</legend>
-          {access.canEditProfile ? <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('business')} onChange={() => toggle('business')} /><span><strong className="folio-ui">Your business</strong><span className="block folio-meta text-folio-text-secondary">Your logo, About text, and location.</span></span></label> : null}
-          <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('bio')} onChange={() => toggle('bio')} /><span><strong className="folio-ui">Your bio</strong><span className="block folio-meta text-folio-text-secondary">We’ll look for your background on the site, using your name.</span></span></label>
-          {access.canImportProjects ? <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('projects')} onChange={() => toggle('projects')} /><span><strong className="folio-ui">Your projects</strong><span className="block folio-meta text-folio-text-secondary">Photographs and descriptions, ready to add to your public profile. Add rooms, materials and your interview later for a Folio Feature.</span></span></label> : null}
-        </fieldset>
-        <p className="import-assurance folio-meta text-folio-text-secondary">When the import finishes, add the projects and photographs to your public profile with one confirmation. You can exclude anything first. We’ll also look for media coverage for you to review.</p>
-        <label className="flex items-start gap-3 folio-meta"><input type="checkbox" className="mt-1" checked={consent} onChange={event => setConsent(event.target.checked)} required /><span>I’m authorized to use this content. Folio may read my website, privately save the selected text and images, and email me when it’s ready.</span></label>
-        <button className={styles.primary} disabled={busy || !consent || !sections.length}>{busy ? 'Starting your import…' : 'Prepare my workspace'}</button>
-        <p className="folio-meta text-folio-text-secondary import-footer">Leave it with us. We’ll email you when it’s ready to review.</p>
-        <details className="folio-meta text-folio-text-secondary"><summary className="cursor-pointer underline underline-offset-4">What can Folio bring over?</summary><p className="mt-3">We’ll explore up to {IMPORT_LIMITS.pages} public pages and bring over up to {IMPORT_LIMITS.projects} projects with {IMPORT_LIMITS.photos} photographs each. If something can’t be read or is missing, you can add it later.</p></details>
-      </form>}
-    </> : !review ? <p role="status">Loading your saved progress…</p> : <>
-      <details open={!showPreview} className="folio-meta"><summary className="cursor-pointer">Import progress and results</summary><section className={`${card} mt-3`} aria-label="Import progress"><div role="status" aria-live="polite"><h2 className="folio-ui">{phaseLabels[review.run.phase]}</h2><p className="folio-meta text-folio-text-secondary mt-2">{counted(review.run.pages.filter(page => page.status === 'saved').length, 'page')} read · {counted(review.summary.projects, 'project')} · {counted(review.summary.photos, 'photograph')} saved</p></div>
-        <p className="folio-meta">{review.canReview ? 'Confirm your photographs together, then review your media coverage. Interviews come next.' : 'We’ll email you when preparation finishes. Your saved work stays available if part of the import needs attention.'}</p>
-        {run?.notification.status === 'accepted' ? <p className="folio-meta text-folio-text-secondary">Your readiness email has been sent.</p> : run?.notification.error ? <p className="folio-meta">{run.notification.error}</p> : null}
-      </section>
-      {run ? <ProjectDrafts projects={run.projects} canReview={review.canReview} publishedIds={review.projects.filter(project => project.isPublic).map(project => project.id)} /> : null}
-      </details>
-      {run && run.notices.length > 0 ? <section className={card}><h2 className="folio-ui">A few things to review</h2><ul className="list-disc pl-5 space-y-2 folio-meta">{run.notices.map(message => <li key={message}>{message}</li>)}</ul></section> : null}
-      {review.canReview && run ? <>
-        {!showPreview && <ImportPhotoApproval importId={review.id} onPublished={() => setRefresh(value => value + 1)} />}
-        {review.access.canEditProfile && <CoverageManager scope={{ type: 'organization', id: access.id }} autoDiscover sweepId={review.id} />}
-        {hasUnfinishedItems(run) && (run.retryCount || 0) < 3 ? <button type="button" className={styles.secondary} disabled={busy} onClick={() => apply({ action: 'retry' })}>Retry unfinished items</button> : null}
-        {run.pages.some(page => page.status === 'failed') ? <section className={card}><h2 className="folio-ui">Pages we couldn’t read</h2><ul className="space-y-2 folio-meta">{run.pages.filter(page => page.status === 'failed').map(page => <li key={page.url} className="break-words"><a href={page.url} className="underline" target="_blank" rel="noreferrer">{page.url}</a><p>{page.error}</p></li>)}</ul></section> : null}
-        <details id="profile-details" className="workspace-review-details" open={detailsOpen || !showPreview} onToggle={event => setDetailsOpen(event.currentTarget.open)}><summary>Review your profile details</summary><div className="workspace-review-details__body space-y-6">
+
+    {review && run && <>
+      {review.canReview && <>
+        {review.access.canImportProjects && run.sections.includes('projects') && <ImportPhotoApproval importId={review.id} onPublished={() => setRefresh(value => value + 1)} />}
+        {review.access.canEditProfile && <div className="workspace-review-row"><div><h2 className="folio-ui">Press &amp; interviews</h2><p className="folio-meta text-folio-text-secondary">Choose which features to add to your profile.</p></div>
+          <CoverageManager scope={{ type: 'organization', id: access.id }} compact autoDiscover sweepId={review.id} /></div>}
+        {((run.sections.includes('business') && review.access.canEditProfile) || (run.sections.includes('bio') && run.profile.bio)) &&
+        <details id="profile-details" className="workspace-review-details" open={!showPreview}><summary>Review your profile details</summary><div className="workspace-review-details__body space-y-6">
         <p className="folio-meta text-folio-text-secondary">This is your private preview. Save business details when you’re happy with them; confirm the selected photographs together to make them visible on your profile.</p>
         {run.sections.includes('business') && review.access.canEditProfile ? <section className={card}><h2 className="folio-h3">Review your business details</h2>
           <p className="folio-meta text-folio-text-secondary">Saving updates your business’s public profile. Your existing details remain until you save.</p>
@@ -204,11 +167,54 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
           <button className={styles.secondary} disabled={busy || !bio.trim()} onClick={() => apply({ action: 'bio', version: review.bioVersion, bio })}>Use as interview context</button>
           {run.profile.bioApplied ? <Link href="/designer/studio/about-me" className="block underline folio-meta">Continue to my profile interview</Link> : null}
         </section> : null}
-        </div></details>
-      </> : null}
-      {review.canReview ? <Link className="block underline folio-meta" href={`/onboarding/workspace?orgId=${access.id}&new=1&returnTo=${encodeURIComponent(returnTo)}`}>Bring over more work from a website</Link> : null}
+        </div></details>}
+      </>}
+      <details open={!showPreview || review.summary.needsAttention} className="folio-meta"><summary className="cursor-pointer py-3">{review.summary.needsAttention ? 'Import results · needs attention' : 'Import progress and results'}</summary><section className={`${card} mt-3`} aria-label="Import progress"><div role="status" aria-live="polite"><h2 className="folio-ui">{phaseLabels[review.run.phase]}</h2><p className="folio-meta text-folio-text-secondary mt-2">{counted(review.run.pages.filter(page => page.status === 'saved').length, 'page')} read · {counted(review.summary.projects, 'project')} · {counted(review.summary.photos, 'photograph')} saved</p></div>
+        <p className="folio-meta">{review.canReview ? 'Confirm your photographs together, then review your media coverage. Interviews come next.' : 'We’ll email you when preparation finishes. Your saved work stays available if part of the import needs attention.'}</p>
+        {run.notification.status === 'accepted' ? <p className="folio-meta text-folio-text-secondary">Your readiness email has been sent.</p> : run.notification.error ? <p className="folio-meta">{run.notification.error}</p> : null}
+      </section>
+      <ProjectDrafts projects={showPreview ? run.projects.filter(project => project.error || project.status === 'failed' || project.photos.some(photo => photo.status === 'failed')) : run.projects} canReview={review.canReview} publishedIds={review.projects.filter(project => project.isPublic).map(project => project.id)} />
+      {run.notices.length > 0 ? <section className={card}><h2 className="folio-ui">A few things to review</h2><ul className="list-disc pl-5 space-y-2 folio-meta">{run.notices.map(message => <li key={message}>{message}</li>)}</ul></section> : null}
+        {review.canReview && hasUnfinishedItems(run) && (run.retryCount || 0) < 3 ? <button type="button" className={styles.secondary} disabled={busy} onClick={() => apply({ action: 'retry' })}>Retry unfinished items</button> : null}
+        {run.pages.some(page => page.status === 'failed') ? <section className={card}><h2 className="folio-ui">Pages we couldn’t read</h2><ul className="space-y-2 folio-meta">{run.pages.filter(page => page.status === 'failed').map(page => <li key={page.url} className="break-words"><a href={page.url} className="underline" target="_blank" rel="noreferrer">{page.url}</a><p>{page.error}</p></li>)}</ul></section> : null}
+      </details>
+
     </>}
-    <div className="border-t border-folio-border-subtle pt-6 space-y-3"><button type="button" disabled={busy} className="block underline folio-ui" onClick={() => void continueToFolio()}>{id ? 'Continue to Folio' : 'Set up manually for now'}</button><p className="folio-meta text-folio-text-secondary">{access.canImportProjects ? 'Choose My Profile in your account menu to return to your saved work.' : 'You can return to website imports from your professional account.'}</p></div>
+    <div className="workspace-review-footer">
+      <button type="button" disabled={busy} className="underline folio-ui" onClick={() => void continueToFolio()}>{id ? 'Continue to Folio' : 'Set up manually for now'}</button>
+      {review?.canReview && <Link className="underline folio-meta" href={`/onboarding/workspace?orgId=${access.id}&new=1&returnTo=${encodeURIComponent(returnTo)}`}>Bring over more work from a website</Link>}
+    </div>
     {history.length > 0 ? <details><summary className="folio-meta cursor-pointer">Previous imports</summary><ul className="space-y-2 mt-3">{history.map(item => <li key={item.id}><Link className="folio-meta underline" href={`/onboarding/workspace?import=${item.id}`}>{new Date(item.date).toLocaleDateString()} — {item.phase === 'complete' ? 'Ready to review' : item.phase === 'blocked' ? 'Needs attention' : 'In progress'}</Link></li>)}</ul></details> : null}
-  </div></ProfessionalSetupFrame>;
+  </div>;
+  return <ProfessionalSetupFrame stage="workspace" wide={showPreview}>
+    {showPreview && review?.profile ? <WorkspaceReadyPreview profile={review.profile}
+      description={description} location={location} logo={useLogo ? run?.profile.logo : review.business.logo}
+      projects={review.projects} busy={busy} canContribute={review.access.canContribute}
+      onOpenProject={(projectId, reviewPhotos) => void continueToFolio('/project/' + encodeURIComponent(projectId) + (reviewPhotos ? '?publish=photos' : ''))}>
+      {controls}
+    </WorkspaceReadyPreview> : <div className="space-y-7">
+    <SetupProgress step={3} />
+    <div><p className="folio-meta text-folio-text-secondary mb-2">{access.name}</p>
+      <h1 className={styles.title}>{review?.canReview ? 'Your work, ready for you.' : id ? 'Your workspace is taking shape.' : 'Bring your work with you.'}</h1>
+      <p className="folio-body text-folio-text-secondary mt-3">{id ? 'Your progress is saved here. You can leave this page and come back at any time.' : 'Start with your website. We’ll find your work and bring it into Folio, ready for you to make it your own.'}</p>
+    </div>
+    {!id ? <>
+      {memberships.length > 1 ? <label className={styles.label}>Business<select className={field} value={access.id} onChange={event => router.push(`/onboarding/workspace?orgId=${encodeURIComponent(event.target.value)}&new=1&returnTo=${encodeURIComponent(returnTo)}`)}>{memberships.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}</select></label> : null}
+      {!access.canContribute ? <p className="folio-body">Your business access is view only. Ask a business admin for permission to contribute.</p> : !available ? <p className="folio-body">Website imports aren’t available yet. You can add your business details and projects manually.</p> : <form onSubmit={start} className="space-y-6">
+        <label className={styles.label}>Business website<input className={field} type="text" inputMode="url" autoComplete="url" required maxLength={2048} value={website} onChange={event => setWebsite(event.target.value)} placeholder="yourstudio.com" /></label>
+        <fieldset className="import-choices"><legend className="folio-ui">What would you like to bring over?</legend>
+          {access.canEditProfile ? <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('business')} onChange={() => toggle('business')} /><span><strong className="folio-ui">Your business</strong><span className="block folio-meta text-folio-text-secondary">Your logo, About text, and location.</span></span></label> : null}
+          <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('bio')} onChange={() => toggle('bio')} /><span><strong className="folio-ui">Your bio</strong><span className="block folio-meta text-folio-text-secondary">We’ll look for your background on the site, using your name.</span></span></label>
+          {access.canImportProjects ? <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('projects')} onChange={() => toggle('projects')} /><span><strong className="folio-ui">Your projects</strong><span className="block folio-meta text-folio-text-secondary">Photographs and descriptions, ready to add to your public profile. Add rooms, materials and your interview later for a Folio Feature.</span></span></label> : null}
+        </fieldset>
+        <p className="import-assurance folio-meta text-folio-text-secondary">When the import finishes, add the projects and photographs to your public profile with one confirmation. You can exclude anything first. We’ll also look for media coverage for you to review.</p>
+        <label className="flex items-start gap-3 folio-meta"><input type="checkbox" className="mt-1" checked={consent} onChange={event => setConsent(event.target.checked)} required /><span>I’m authorized to use this content. Folio may read my website, privately save the selected text and images, and email me when it’s ready.</span></label>
+        <button className={styles.primary} disabled={busy || !consent || !sections.length}>{busy ? 'Starting your import…' : 'Prepare my workspace'}</button>
+        <p className="folio-meta text-folio-text-secondary import-footer">Leave it with us. We’ll email you when it’s ready to review.</p>
+        <details className="folio-meta text-folio-text-secondary"><summary className="cursor-pointer underline underline-offset-4">What can Folio bring over?</summary><p className="mt-3">We’ll explore up to {IMPORT_LIMITS.pages} public pages and bring over up to {IMPORT_LIMITS.projects} projects with {IMPORT_LIMITS.photos} photographs each. If something can’t be read or is missing, you can add it later.</p></details>
+      </form>}
+    </> : !review ? <p role="status">Loading your saved progress.</p> : null}
+    {controls}
+    </div>}
+  </ProfessionalSetupFrame>;
 }

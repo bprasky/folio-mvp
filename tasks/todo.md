@@ -1,3 +1,12 @@
+# Studio profile and import review
+
+- [x] Put one publishing action beside the studio identity and group private tools.
+- [x] Keep public facts and published work accessible directly from the profile.
+- [x] Put import review controls before the gallery and give drafts without photos compact rows.
+- [x] Verify owner, visitor and import states.
+
+Review: Server-rendered checks cover the owner action, collapsed management controls, saved About content and public discovery links. Import checks cover bulk approval, empty photo rows and longer galleries. Local Chromium could not start, and the local Next compile hit a Windows directory creation error. The PR workflow exercises these in Linux.
+
 # Sweep fixes: five high-impact hiccups — 2026-11-17
 
 - [x] Photo approval: add a workspace link so designers can sort rooms, tag and interview before publishing.

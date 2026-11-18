@@ -1,5 +1,6 @@
 import { getOrgProfileFeed } from '@/lib/profile/org-feed';
-import { CoverageManager } from '@/components/coverage/CoverageManager';
+import { StudioProfileTools, type ProfileNextStep } from '@/components/org-profile/StudioProfileTools';
+import { WORKSPACE_IMPORT_KIND, isWorkspaceImport } from '@/lib/workspace-import/types';
 import { ProfileDetails } from '@/components/profile/ProfileDetails';
 import { profileMetadata, identityStructuredData, serializeJsonLd } from '@/lib/seo/public';
 import { Suspense } from 'react';
@@ -14,7 +15,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
 import styles from '@/components/org-profile/OrgProfileAppearance.module.css';
 import { OrgMemberNotices } from '@/components/org-profile/OrgMemberNotices';
-import { can, isOrgRole } from '@/lib/orgPermissions';
+import { can, canCreateFirmProject, isOrgRole } from '@/lib/orgPermissions';
 import OrgProfileTabs from '@/components/org-profile/OrgProfileTabs';
 import OrgProfileFeed from '@/components/org-profile/OrgProfileFeed';
 import OrgShopTab from '@/components/org-profile/OrgShopTab';
@@ -139,33 +140,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     // TeamMember model might not exist in Prisma client yet
   }
 
-  // Fetch onboarding progress
-  let onboardingProgress = {
-    bioInterviewComplete: false,
-    studioDetailsComplete: false,
-    teamSetupComplete: false,
-    processComplete: false,
-    recognitionComplete: false,
-    pinnedWorkComplete: false,
-  };
-  try {
-    const progress = await (prisma as any).orgOnboardingProgress?.findUnique?.({
-      where: { organizationId: resolvedParams.orgId },
-    });
-    if (progress) {
-      onboardingProgress = {
-        bioInterviewComplete: progress.bioInterviewComplete ?? false,
-        studioDetailsComplete: progress.studioDetailsComplete ?? false,
-        teamSetupComplete: progress.teamSetupComplete ?? false,
-        processComplete: progress.processComplete ?? false,
-        recognitionComplete: progress.recognitionComplete ?? false,
-        pinnedWorkComplete: progress.pinnedWorkComplete ?? false,
-      };
-    }
-  } catch {
-    // OrgOnboardingProgress model might not exist yet
-  }
-
   // Fetch process phases
   let processPhases: any[] = [];
   try {
@@ -194,6 +168,8 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   let isAdmin = false;
   let isMember = false;
   let canAddToTeam = false;
+  let canCreate = false;
+  let canInvite = false;
   // True when the viewer is a member of this org AND their own Folio
   // profile is missing the data the team card pulls from (photo or bio).
   // Drives the self-nudge banner; default false when not signed in.
@@ -213,6 +189,11 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       isMember = membership !== null;
       canAddToTeam = isOrgRole(membership?.role) && can(membership?.role, 'add_to_team_page');
 
+      if (isOrgRole(membership?.role)) {
+        canCreate = canCreateFirmProject(membership.role, org.type);
+        canInvite = can(membership.role, 'invite_members');
+      }
+
       if (isMember) {
         const viewer = await prisma.user.findUnique({
           where: { id: session.user.id },
@@ -227,40 +208,39 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     }
   }
 
-  // Get org members to find their projects
-  let memberIds: string[] = [];
-  try {
-    const members = await prisma.organizationUser.findMany({
-      where: { organizationId: resolvedParams.orgId, isActive: true },
-      select: { userId: true },
-    });
-    memberIds = members.map(m => m.userId);
-  } catch (err) {
-    console.error('[OrgProfilePage] Error fetching member IDs:', err);
-  }
-
-  // Counts and cover choices share exact-firm, current-public eligibility.
   const projectCount = profileData.projectCount;
-
-  // Compute setup card completion state
-  const setupState = {
-    profileComplete: Boolean(orgData.description) && Boolean(org.logo),
-    recognitionComplete: recognition.length > 0,
-    teamInviteComplete: false,
-    firstProjectPublished: projectCount > 0,
-  };
-
-  if (memberIds.length > 1) {
-    setupState.teamInviteComplete = true;
-  } else {
-    try {
-      const inviteCount = await (prisma as any).teamMemberInvite?.count?.({
-        where: { organizationId: resolvedParams.orgId },
-      }) ?? 0;
-      setupState.teamInviteComplete = inviteCount > 0;
-    } catch {
-      // TeamMemberInvite model might not exist yet
+  const isVendorOrg = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'].includes(org.type);
+  let next: ProfileNextStep | null = null;
+  if (!isVendorOrg && canCreate && !projectCount && session?.user?.id) {
+    const userId = session.user.id;
+    const [savedImport, draft] = await Promise.all([
+      prisma.importSession.findFirst({
+        where: { userId, AND: [
+          { processingMeta: { path: ['kind'], equals: WORKSPACE_IMPORT_KIND } },
+          { processingMeta: { path: ['orgId'], equals: org.id } },
+          { processingMeta: { path: ['sections'], array_contains: ['projects'] } },
+        ] }, orderBy: { createdAt: 'desc' }, select: { id: true, processingMeta: true },
+      }),
+      prisma.project.findFirst({
+        where: { designerOrgId: org.id, isPublic: false, OR: [{ ownerId: userId }, { designerId: userId }] },
+        orderBy: { updatedAt: 'desc' }, select: { id: true, title: true },
+      }),
+    ]);
+    const run = savedImport && isWorkspaceImport(savedImport.processingMeta) ? savedImport.processingMeta : null;
+    const resumeImport = run && (run.phase !== 'complete' || run.projects.some(project => project.projectId && project.projectId === draft?.id));
+    if (savedImport && resumeImport) {
+      next = { title: 'Review your website import', description: 'Choose which projects and photographs appear on your studio profile.',
+        href: '/onboarding/workspace?import=' + savedImport.id, action: 'Open import' };
+    } else if (draft) {
+      next = { title: 'Continue ' + draft.title, description: 'Choose the photographs for your first public project.',
+        href: '/project/' + draft.id, action: 'Open project' };
+    } else {
+      next = { title: 'Add your first project', description: 'Bring work over from your website or start a project with your own photographs.',
+        href: '/onboarding/workspace?orgId=' + org.id + '&new=1&returnTo=%2Fprojects%2Fnew', action: 'Get started' };
     }
+  } else if (!isVendorOrg && isAdmin && !org.description?.trim()) {
+    next = { title: 'Introduce your studio', description: 'Give visitors a short introduction to your practice.',
+      href: '/org/' + org.id + '/edit', action: 'Add introduction' };
   }
 
   // Get pinned items (with fallback for missing fields)
@@ -354,10 +334,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     }
   }
 
-  // Detect vendor org type
-  const VENDOR_ORG_TYPES = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
-  const isVendorOrg = VENDOR_ORG_TYPES.includes(org.type);
-
   // Fetch org members for team tab (used by both vendor and design orgs)
   let orgMembers: any[] = [];
   try {
@@ -397,32 +373,33 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     displayOrder: typeof m.displayOrder === 'number' ? m.displayOrder : 0,
   }));
 
+  const memberNotices = <OrgMemberNotices orgId={org.id} canAddToTeam={canAddToTeam}
+    isMember={isMember} isOwner={isOwner} currentUserNeedsProfile={currentUserNeedsProfile} />;
+
   return (
     <div className={`min-h-screen ${styles.page}`} style={profilePageStyle(profileData.appearance.backgroundColor)}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(identityStructuredData({ ...org, kind: 'Organization', image: org.logo })) }} />
       <OrgProfileHero
         org={orgData}
         projectCount={projectCount}
-        isAdmin={isAdmin}
+        isAdmin={isVendorOrg && isAdmin}
+        aboutOpen={activeTab === 'about'}
+        studioDetails={activeTab !== 'about' ? <ProfileDetails organization label="Practice details" name={org.name} description={org.description} philosophy={org.philosophy} location={org.location} website={org.website} specialties={org.specialties} services={org.services} serviceRegions={org.serviceRegions} /> : undefined}
         isMember={isMember}
         appearance={profileData.appearance}
         cover={profileData.cover}
         year={new Date().getUTCFullYear()}
       />
 
-      <OrgMemberNotices
-        orgId={resolvedParams.orgId}
-        canAddToTeam={canAddToTeam}
-        isMember={isMember}
-        isOwner={isOwner}
-        currentUserNeedsProfile={currentUserNeedsProfile}
-      />
-
+      {isVendorOrg && memberNotices}
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
-      {activeTab !== 'about' && <ProfileDetails organization name={org.name} description={org.description} philosophy={org.philosophy} location={org.location} website={org.website} specialties={org.specialties} services={org.services} serviceRegions={org.serviceRegions} />}
-      {isAdmin && !isVendorOrg && <div className="max-w-6xl mx-auto px-6"><CoverageManager scope={{ type: 'organization', id: org.id }} /></div>}
       <div id="profile-content" className="scroll-mt-20">
+      {!isVendorOrg && (isAdmin || canInvite || next) && (
+        <StudioProfileTools orgId={org.id} next={next} isAdmin={isAdmin} canInvite={canInvite}>
+          {memberNotices}
+        </StudioProfileTools>
+      )}
       <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} />
 
       <div className={`${styles.profileFrame} ${activeTab === 'feed' ? '' : `px-4 md:px-6 ${styles.neutralContent}`} py-8`}>
@@ -452,7 +429,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
               isMember={isMember}
               isAdmin={isAdmin}
               projectCount={projectCount}
-              setupState={setupState}
             />
           </Suspense>
         )}
@@ -488,7 +464,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
               date: r.date ?? null,
               url: r.url ?? null,
             }))}
-            onboardingProgress={onboardingProgress}
             isOwner={isOwner}
           />
         )}

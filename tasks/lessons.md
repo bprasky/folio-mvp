@@ -1,3 +1,7 @@
+## 2026-11-18 - Studio profile hierarchy
+
+Give a studio with unfinished work one relevant publishing action. Keep team and coverage administration in the owner's controls, and place import decisions before the project gallery. Optional contributions should never count against a studio's readiness.
+
 ## 2026-11-04 — Vendor discovery belongs in Shop
 
 Keep “Our vendors” out of the organization profile header for every role. The founder wants to revisit vendor discovery within Shop and the profile tabs. Until that experience is designed, omit the entry. Keep cover actions relevant to visitors or members and reserve profile management for admins.
