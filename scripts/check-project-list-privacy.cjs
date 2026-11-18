@@ -36,7 +36,6 @@ const mocks = {
       return structuredClone(rows.filter(row => matches(row, where)));
     } },
   } },
-  '@/lib/orgPermissions': { can: () => false, isOrgRole: () => false, canCreateFirmProject: () => false },
   '@/lib/supabaseServer': { supabaseServer: null },
   '@/lib/analytics': { logPassiveEvent: () => { throw Error('Unexpected analytics'); } },
   './normalizeCreatePayload': { CanonicalCreateSchema: { shape: new Proxy({}, { get: () => field }) }, CompletionDateSchema: null, normalizeCreatePayload: () => { throw Error('Unexpected create'); } },
@@ -73,6 +72,7 @@ async function load(name) {
   const real = {
     route: 'src/app/api/projects/route.ts',
     '@/lib/permissions': 'src/lib/permissions.ts',
+    '@/lib/orgPermissions': 'src/lib/orgPermissions.ts',
     '@/lib/post/publicPost': 'src/lib/post/publicPost.ts',
     '@/lib/property-sale/schema': 'src/lib/property-sale/schema.ts',
     '@/lib/products/imageProvenance': 'src/lib/products/imageProvenance.ts',
