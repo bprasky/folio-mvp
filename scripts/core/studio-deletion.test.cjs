@@ -173,6 +173,53 @@ test('an unknown restrictive dependency rolls back every deletion and workspace 
   } finally { await db.$executeRawUnsafe('DROP TABLE studio_delete_test_restrict'); }
 });
 
+test('photo promotions and homepage bids cannot be erased by studio project cascades', async () => {
+  const { actor, org } = await fixture();
+  const project = await f.project(actor.id, { designerOrgId: org.id }), image = await f.image(project.id), product = await f.product();
+  const vendor = await f.organization({ type: 'VENDOR' });
+  const tag = await db.productTag.create({ data: { imageId: image.id, productId: product.id, x: 20, y: 30 } });
+  const photoBoost = await db.inContextBoost.create({ data: { productTagId: tag.id, productId: product.id, designerId: actor.id, vendorId: vendor.id, status: 'APPROVED', vendorSpendCents: 500 } });
+  let review = await reviewStudioDeletion(actor.id, org.id);
+  assert.match(review.blockers.join(' '), /promotion/);
+  await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
+  assert.ok(await db.inContextBoost.findUnique({ where: { id: photoBoost.id } }));
+  await db.inContextBoost.delete({ where: { id: photoBoost.id } });
+  const post = await db.projectPost.create({ data: { projectId: project.id, slug: `reel-${org.id}` } });
+  const reel = await db.homepageReelBoost.create({ data: { projectPostId: post.id, productId: product.id, vendorId: vendor.id, bidCents: 500, startsAt: new Date(), endsAt: new Date(Date.now() + 60000) } });
+  review = await reviewStudioDeletion(actor.id, org.id);
+  assert.match(review.blockers.join(' '), /promotion/);
+  await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
+  assert.ok(await db.homepageReelBoost.findUnique({ where: { id: reel.id } }));
+});
+
+test('a photo promotion starting below the project FK is protected from a concurrent studio deletion', async () => {
+  const { actor, org } = await fixture();
+  const project = await f.project(actor.id, { designerOrgId: org.id }), image = await f.image(project.id), product = await f.product();
+  const tag = await db.productTag.create({ data: { imageId: image.id, productId: product.id, x: 20, y: 30 } });
+  const review = await reviewStudioDeletion(actor.id, org.id);
+  let locked, release;
+  const acquired = new Promise(resolve => { locked = resolve; }), gate = new Promise(resolve => { release = resolve; });
+  const promoting = db.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM product_tags WHERE id = ${tag.id} FOR KEY SHARE`;
+    locked(); await gate;
+    await tx.inContextBoost.create({ data: { productTagId: tag.id, productId: product.id, designerId: actor.id, status: 'APPROVED', vendorSpendCents: 500 } });
+  }, { timeout: 15000 });
+  await acquired;
+  const deleting = deleteStudio(actor.id, org.id, confirm(review));
+  const deadline = Date.now() + 5000;
+  let blocked = false;
+  while (!blocked && Date.now() < deadline) {
+    const rows = await db.$queryRaw`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock' AND query LIKE '%FROM product_tags%FOR UPDATE%') AS blocked`;
+    blocked = rows[0].blocked;
+    if (!blocked) await new Promise(resolve => setTimeout(resolve, 20));
+  }
+  release(); await promoting;
+  await assert.rejects(deleting, /changed|promotion/);
+  assert.ok(blocked, 'deletion actually waited for the promotion to finish');
+  assert.ok(await db.project.findUnique({ where: { id: project.id } }));
+  assert.equal(await db.inContextBoost.count({ where: { productTagId: tag.id } }), 1);
+});
+
 test('simultaneous confirmations produce one deletion receipt and both callers can recover', async () => {
   const { actor, org } = await fixture();
   await f.project(actor.id, { designerOrgId: org.id });

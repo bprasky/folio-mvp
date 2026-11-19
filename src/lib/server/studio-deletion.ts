@@ -43,7 +43,7 @@ async function inspect(db: Database, userId: string, orgId: string) {
   const projects = await db.project.findMany({ where: { designerOrgId: orgId }, orderBy: { id: 'asc' },
     select: { id: true, updatedAt: true, isPublic: true, publishedAt: true, portfolioPublishedAt: true, post: { select: { slug: true } } } });
   const projectIds = projects.map(project => project.id);
-  const [imports, scheduled, externalSpotlights, stories, orders, subscriptions, boosts, developments, claims, collaborations, live] = await Promise.all([
+  const [imports, scheduled, externalSpotlights, stories, orders, subscriptions, boosts, photoBoosts, reelBoosts, developments, claims, collaborations, live] = await Promise.all([
     db.importSession.findMany({ where: { OR: [importsFor(orgId), { projectId: { in: projectIds } }] }, select: { id: true, status: true, updatedAt: true }, orderBy: { id: 'asc' } }),
     db.spotlightQuestion.count({ where: { spotlight: { projectId: { in: projectIds } } } }),
     db.productSpotlight.count({ where: { publisherOrgId: orgId, projectId: { notIn: projectIds } } }),
@@ -51,6 +51,8 @@ async function inspect(db: Database, userId: string, orgId: string) {
     db.order.count({ where: { OR: [{ vendorOrgId: orgId }, { projectId: { in: projectIds } }] } }),
     db.vendorSubscription.count({ where: { organizationId: orgId, stripeSubscriptionId: { not: null } } }),
     db.boost.count({ where: { OR: [{ vendorId: orgId }, { opportunity: { projectId: { in: projectIds } } }] } }),
+    db.inContextBoost.count({ where: { OR: [{ vendorId: orgId }, { productTag: { image: { projectId: { in: projectIds } } } }, { projectPost: { projectId: { in: projectIds } } }] } }),
+    db.homepageReelBoost.count({ where: { OR: [{ vendorId: orgId }, { projectPost: { projectId: { in: projectIds } } }] } }),
     db.development.count({ where: { developerOrgId: orgId } }),
     db.vendorProductClaim.count({ where: { organizationId: orgId } }),
     db.collaborationStory.count({ where: { OR: [{ vendorOrgId: orgId }, { taggedProjectId: { in: projectIds } }] } }),
@@ -63,7 +65,7 @@ async function inspect(db: Database, userId: string, orgId: string) {
   if (live) blockers.push('An interview is still open or finishing. End it before deleting the studio.');
   if (scheduled || externalSpotlights) blockers.push('This studio has protected Spotlight records. Contact Folio to arrange their removal before deleting the studio.');
   if (stories) blockers.push('Publishing Studio stories use this studio or its projects. Contact Folio to review these stories before deletion.');
-  if (orders || subscriptions || boosts) blockers.push('Billing, order or paid collaboration records need to be resolved with Folio before this studio can be deleted.');
+  if (orders || subscriptions || boosts || photoBoosts || reelBoosts) blockers.push('Billing, order or promotion records need to be resolved with Folio before this studio can be deleted.');
   if (developments || claims || collaborations) blockers.push('This studio has shared developments, product claims or collaboration stories. Contact Folio to resolve them before deletion.');
   const counts = { projects: projects.length, publishedProjects: projects.filter(p => p.isPublic || p.publishedAt || p.portfolioPublishedAt).length,
     members: org.users.length, profileItems: org._count.orgMedia + org._count.orgRecognition + org._count.orgCollaborations };
@@ -91,7 +93,9 @@ export async function deleteStudio(userId: string, orgId: string, input: StudioD
     // work that committed while this request was waiting for the lock.
     await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${orgId} FOR UPDATE`;
     await tx.$queryRaw`SELECT id FROM organization_users WHERE "organizationId" = ${orgId} AND "userId" = ${userId} FOR UPDATE`;
-    await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
+    // The personal account survives. Block status changes while allowing
+    // existing collaborators to finish inserting records that reference it.
+    await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR NO KEY UPDATE`;
     if (await tx.notification.findFirst({ where: { id: receiptId, userId, type: 'STUDIO_DELETED' }, select: { id: true } }))
       return { deleted: true as const, orgId, replayed: true, paths: [] as string[] };
     const before = await inspect(tx, userId, orgId);
@@ -102,6 +106,16 @@ export async function deleteStudio(userId: string, orgId: string, input: StudioD
 
     // Keep the same project lock order as Spotlight's scheduler/deletion guard.
     for (const project of before.projects) await assertNoScheduledHistory(tx, project.id);
+    const projectIds = before.projects.map(project => project.id);
+    if (projectIds.length) {
+      // Promotions attach below the project FK and cascade through these
+      // parents. Lock them before the final review to protect concurrent bids.
+      await tx.$queryRaw(Prisma.sql`SELECT id FROM project_posts WHERE "projectId" IN (${Prisma.join(projectIds)}) ORDER BY id FOR UPDATE`);
+      await tx.$queryRaw(Prisma.sql`SELECT id FROM project_images WHERE "projectId" IN (${Prisma.join(projectIds)}) ORDER BY id FOR UPDATE`);
+      await tx.$queryRaw(Prisma.sql`SELECT tag.id FROM product_tags AS tag JOIN project_images AS image ON image.id = tag."imageId" WHERE image."projectId" IN (${Prisma.join(projectIds)}) ORDER BY tag.id FOR UPDATE OF tag`);
+      await tx.$queryRaw(Prisma.sql`SELECT id FROM boost_opportunities WHERE "projectId" IN (${Prisma.join(projectIds)}) ORDER BY id FOR UPDATE`);
+    }
+    await tx.$queryRaw`SELECT id FROM boost_opportunities WHERE "vendorId" = ${orgId} ORDER BY id FOR UPDATE`;
     const current = await inspect(tx, userId, orgId);
     if (current.review.version !== input.version || current.review.blockers.length)
       throw new StudioDeletionError('The studio changed while deletion was being confirmed. Review it again.');
