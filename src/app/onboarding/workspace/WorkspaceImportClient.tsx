@@ -188,6 +188,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   </div>;
   return <ProfessionalSetupFrame stage="workspace" wide={showPreview}>
     {showPreview && review?.profile ? <WorkspaceReadyPreview profile={review.profile}
+      key={review.id} importId={review.id} canEditProfile={review.access.canEditProfile}
       description={description} location={location} logo={useLogo ? run?.profile.logo : review.business.logo}
       projects={review.projects} busy={busy} canContribute={review.access.canContribute}
       onOpenProject={(projectId, reviewPhotos) => void continueToFolio('/project/' + encodeURIComponent(projectId) + (reviewPhotos ? '?publish=photos' : ''))}>

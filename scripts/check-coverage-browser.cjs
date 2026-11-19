@@ -94,19 +94,22 @@ async function checkLabel(page,selector){
     for(const theme of ['light','dark'])for(const width of [390,1440]){
       await page.setViewport({width,height:1000});
       await page.goto(base+'/studio?theme='+theme,{waitUntil:'networkidle0'});
-      await page.waitForSelector('a[href="/onboarding/workspace?import=fixture"]');
-      assert.equal(await page.$eval('details', element=>element.open),false);
+      await page.waitForSelector('button::-p-text(Manage profile)');
+      assert.equal(await page.$('[role="dialog"]'),null);
+      assert.equal(await page.$('a[href="/onboarding/workspace?import=fixture"]'),null,'Private next steps stay inside the management sheet');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
       await page.screenshot({path:path.join(out,'studio-'+theme+'-'+width+'.png'),fullPage:true});
       const next='a[href="/onboarding/workspace?import=fixture"]',team='[aria-label="Members to add to team"] button',complete='a[href="/profile"]';
-      const ratios=[await checkLabel(page,next),await checkLabel(page,'summary')];
-      await page.click('summary');
+      const ratios=[await checkLabel(page,'button::-p-text(Manage profile)'),await checkLabel(page,'button::-p-text(Edit cover)')];
+      await click('Manage profile');
       await page.waitForSelector('a[href="/org/studio/edit"]',{visible:true});
-      for(const selector of [team,complete,'button[aria-label="Dismiss"]','a[href="/org/studio/edit"]'])ratios.push(await checkLabel(page,selector));
+      for(const selector of [next,team,complete,'button[aria-label="Dismiss"]','a[href="/org/studio/edit"]'])ratios.push(await checkLabel(page,selector));
       await page.hover(team);ratios.push(await checkLabel(page,team));
       await page.focus(complete);ratios.push(await checkLabel(page,complete));
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
       await page.screenshot({path:path.join(out,'studio-controls-'+theme+'-'+width+'.png'),fullPage:true});
+      await page.keyboard.press('Escape');await page.waitForSelector('[role="dialog"]',{hidden:true});
+      assert.equal(await page.$('a[href="/onboarding/workspace?import=fixture"]'),null);
       await page.goto(base+'/recognition?theme='+theme,{waitUntil:'networkidle0'});
       for(const selector of ['button[aria-pressed="true"]','button[aria-pressed="false"]','[role="dialog"] button:disabled'])ratios.push(await checkLabel(page,selector));
       await page.click('button[aria-pressed="false"]');

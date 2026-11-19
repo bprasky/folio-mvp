@@ -1,3 +1,7 @@
+# Founder portrait implementation
+
+See tasks/founder-portraits.md for the active plan and verification.
+
 # Studio profile and import review
 
 - [x] Put one publishing action beside the studio identity and group private tools.

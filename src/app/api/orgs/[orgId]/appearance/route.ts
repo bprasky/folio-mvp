@@ -85,7 +85,9 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Check the page appearance fields.' }, { status: 400, headers: privateHeaders });
     const appearance = parsed.data;
     if ((appearance.cover.kind === 'upload' && !ownedUpload(appearance.cover.url, orgId)) ||
-        (appearance.identity.url !== null && !ownedUpload(appearance.identity.url, orgId))) {
+        (appearance.identity.url !== null && !ownedUpload(appearance.identity.url, orgId)) ||
+        (appearance.portrait && (!ownedUpload(appearance.portrait.originalUrl, orgId) ||
+          (appearance.portrait.cutoutUrl && !ownedUpload(appearance.portrait.cutoutUrl, orgId))))) {
       throw new AppearanceError('Upload this image for this organization before saving it.', 400);
     }
     await prisma.$transaction(async tx => {

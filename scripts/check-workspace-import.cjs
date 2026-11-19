@@ -87,7 +87,7 @@ function load(file) {
         assert.deepEqual(row.processingMeta.notification.message, { to: message.to, subject: message.subject, html: message.html });
         sends.push(message); return { success: !sendFails };
       } };
-      if (name.startsWith('@/')) { const base = path.resolve('src', name.slice(2)); return load(fs.existsSync(base + '.ts') ? base + '.ts' : base + '.tsx'); }
+      if (name.startsWith('@/')) { const base = path.resolve('src', name.slice(2)); return load(fs.existsSync(base + '.ts') ? base + '.ts' : fs.existsSync(base + '.tsx') ? base + '.tsx' : path.join(base, 'index.ts')); }
       if (name.startsWith('.')) return load(path.resolve(path.dirname(file), name) + '.ts');
       return require(name);
     },
@@ -165,7 +165,8 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   }));
   const previewProject = { id: 'project', title: 'Harbor', isPublic: false, photos: [{ ...landscape, alt: 'Living room' }] };
   const preview = renderPreview({ projects: [previewProject] });
-  assert.ok(preview.indexOf('Private publication controls') < preview.indexOf('Your imported projects'));
+  assert.doesNotMatch(preview, /Private publication controls/, 'review controls stay in the closed private sheet');
+  assert.match(preview, /Review &amp; publish/);
   assert.match(preview, /Private draft/);
   assert.match(preview, /Review photographs/);
   assert.doesNotMatch(preview, /Start.*interview<|Begin the interview/);

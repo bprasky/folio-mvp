@@ -1,7 +1,6 @@
 import { getOrgProfileFeed } from '@/lib/profile/org-feed';
 import { StudioProfileTools, type ProfileNextStep } from '@/components/org-profile/StudioProfileTools';
 import { WORKSPACE_IMPORT_KIND, isWorkspaceImport } from '@/lib/workspace-import/types';
-import { ProfileDetails } from '@/components/profile/ProfileDetails';
 import { profileMetadata, identityStructuredData, serializeJsonLd } from '@/lib/seo/public';
 import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
@@ -384,7 +383,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         projectCount={projectCount}
         isAdmin={isVendorOrg && isAdmin}
         aboutOpen={activeTab === 'about'}
-        studioDetails={activeTab !== 'about' ? <ProfileDetails organization label="Practice details" name={org.name} description={org.description} philosophy={org.philosophy} location={org.location} website={org.website} specialties={org.specialties} services={org.services} serviceRegions={org.serviceRegions} /> : undefined}
+        tools={!isVendorOrg && (isAdmin || canInvite || next) ? <StudioProfileTools orgId={org.id} next={next} isAdmin={isAdmin} canInvite={canInvite}>{memberNotices}</StudioProfileTools> : undefined}
         isMember={isMember}
         appearance={profileData.appearance}
         cover={profileData.cover}
@@ -395,11 +394,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
       <div id="profile-content" className="scroll-mt-20">
-      {!isVendorOrg && (isAdmin || canInvite || next) && (
-        <StudioProfileTools orgId={org.id} next={next} isAdmin={isAdmin} canInvite={canInvite}>
-          {memberNotices}
-        </StudioProfileTools>
-      )}
       <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} />
 
       <div className={`${styles.profileFrame} ${activeTab === 'feed' ? '' : `px-4 md:px-6 ${styles.neutralContent}`} py-8`}>
