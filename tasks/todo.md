@@ -1,3 +1,15 @@
+# Studio deletion by an active owner or admin
+
+- [ ] Review role verification, studio dependencies, project deletion guards and repeat-request recovery.
+- [ ] Add a preview and atomic deletion endpoint with fresh authorization, typed name, changed-review rejection and protected-record blockers.
+- [ ] Add a discreet studio-settings entry and accessible confirmation with counts, errors and cancel/retry behavior.
+- [ ] Verify role isolation, rollback, stale review, repeated requests, unrelated data, and desktop/mobile light/dark behavior; run repository checks.
+- [ ] Commit and open a review PR. Do not delete production studios or merge/deploy this feature without a release instruction.
+
+Scope: studio owners/admins are verified through active database membership and an approved personal account; global admin status alone is insufficient. Delete the selected studio and projects whose primary designer organization is that studio. Preserve personal users, their other workspaces, and projects that only credit the studio. Reuse existing Spotlight retention safeguards and require separately handled commercial/protected records. No schema migration.
+
+---
+
 # Studio profile and import review
 
 - [x] Put one publishing action beside the studio identity and group private tools.

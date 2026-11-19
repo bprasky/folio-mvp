@@ -7,6 +7,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { RolePermissionsMatrix } from '@/components/org-profile/RolePermissionsMatrix';
 import OrgAppearanceSettings from '@/components/org-profile/OrgAppearanceSettings';
+import StudioDeletion from '@/components/org-profile/StudioDeletion';
+import { isDeletableStudioType } from '@/lib/studio-deletion';
 
 // Organization appearance and administration are restricted to owners/admins.
 
@@ -53,6 +55,7 @@ export default function OrgSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [orgName, setOrgName] = useState('');
+  const [orgType, setOrgType] = useState('');
   const [membersCanPublish, setMembersCanPublish] = useState(true);
   const [savingPosting, setSavingPosting] = useState(false);
   const [postingError, setPostingError] = useState<string | null>(null);
@@ -83,6 +86,7 @@ export default function OrgSettingsPage() {
           const data = await res.json();
           if (controller.signal.aborted) return;
           setOrgName(data.name || '');
+          setOrgType(data.type || '');
           setMembersCanPublish(data.membersCanPublish === true);
           const userMember = data.members?.find(
             (m: any) => m.userId === userId
@@ -630,6 +634,7 @@ export default function OrgSettingsPage() {
           {postingError && <p role="alert" className="text-sm text-red-700 mt-2">{postingError}</p>}
         </section>
         <RolePermissionsMatrix membersCanPublish={membersCanPublish} />
+        {isDeletableStudioType(orgType) && <StudioDeletion key={orgId} orgId={orgId} />}
       </div>
     </div>
   );

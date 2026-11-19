@@ -1,0 +1,51 @@
+name: Studio deletion
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/core/studio-deletion.test.cjs'
+      - 'scripts/check-studio-deletion-browser.cjs'
+      - 'prisma/schema.prisma'
+      - '.github/workflows/studio-deletion.yml'
+  workflow_dispatch:
+jobs:
+  studio-deletion:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable
+          POSTGRES_DB: studio_deletion_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Prepare isolated database from the current schema
+        env:
+          DATABASE_URL: postgresql://postgres:disposable@127.0.0.1:5432/studio_deletion_test
+          DIRECT_URL: postgresql://postgres:disposable@127.0.0.1:5432/studio_deletion_test
+          PGPASSWORD: disposable
+        run: |
+          psql -h 127.0.0.1 -U postgres -d studio_deletion_test -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+          npx prisma db push
+      - name: Authorization, deletion, rollback and concurrency with real PostgreSQL
+        env:
+          CORE_TEST_DATABASE_URL: postgresql://postgres:disposable@127.0.0.1:5432/studio_deletion_test
+          CORE_TEST_DATABASE_DISPOSABLE: '1'
+        run: node --import tsx --test scripts/core/studio-deletion.test.cjs
+      - name: Confirmation dialog in Chromium
+        run: STUDIO_DELETE_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-studio-deletion-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-deletion-review
+          path: .tmp/studio-deletion-browser/*.png
