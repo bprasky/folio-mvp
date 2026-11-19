@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -211,7 +213,7 @@ export function BioInterviewModal({
   if (step === 'generating') {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+        <DialogContent className={`${controls.dialog} w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col items-center justify-center backdrop-blur-xl border border-folio-border-subtle shadow-2xl overflow-hidden`}>
           <DialogTitle className="sr-only">Creating your studio bio</DialogTitle>
           <div className="flex flex-col items-center justify-center space-y-6">
             <Sparkles className="w-16 h-16 text-amber-600 animate-pulse" />
@@ -232,7 +234,7 @@ export function BioInterviewModal({
   if (step === 'complete') {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col items-center justify-center bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+        <DialogContent className={`${controls.dialog} w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col items-center justify-center backdrop-blur-xl border border-folio-border-subtle shadow-2xl overflow-hidden`}>
           <DialogTitle className="sr-only">Your studio bio is ready</DialogTitle>
           <div className="flex flex-col items-center justify-center space-y-6">
             <div
@@ -249,7 +251,7 @@ export function BioInterviewModal({
             </p>
             <button
               onClick={onClose}
-              className="mt-4 px-8 py-3 bg-[var(--text-primary)] text-white rounded-full text-sm font-medium hover:opacity-90 transition-colors"
+              className="mt-4 px-8 py-3 bg-folio-text-primary text-surface-canvas rounded-full text-sm font-medium hover:opacity-90 transition-colors"
             >
               View Profile
             </button>
@@ -262,10 +264,10 @@ export function BioInterviewModal({
   // Main interview view - immersive style
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col bg-white/90 backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+      <DialogContent className={`${controls.dialog} w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col backdrop-blur-xl border border-folio-border-subtle shadow-2xl overflow-hidden`}>
         <DialogTitle className="sr-only">Studio bio interview</DialogTitle>
         {/* Header with close button and progress */}
-        <div className="flex items-center justify-between px-8 py-4 border-b border-folio-border-subtle/50 bg-white/50">
+        <div className="flex items-center justify-between px-8 py-4 border-b border-folio-border-subtle/50 bg-surface-ground">
           <button
             onClick={onClose}
             className="text-folio-text-secondary hover:text-folio-text-primary transition-colors p-1 rounded-full hover:bg-surface-ground"
@@ -357,7 +359,7 @@ export function BioInterviewModal({
                           type="button"
                           className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                             selected
-                              ? 'bg-[var(--text-primary)] text-white'
+                              ? 'bg-folio-text-primary text-surface-canvas'
                               : 'bg-surface-ground text-folio-text-primary hover:bg-surface-ground'
                           }`}
                           onClick={() => {
@@ -386,7 +388,7 @@ export function BioInterviewModal({
                       value={getCurrentAnswer()}
                       onChange={(e) => handleAnswer(e.target.value)}
                       placeholder="Or describe a representative project here..."
-                      className="w-full min-h-[120px] p-4 bg-white border border-folio-border-subtle rounded-xl text-lg placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-folio-border-subtle resize-y"
+                      className="w-full min-h-[120px] p-4 bg-surface-ground text-folio-text-primary border border-folio-border-subtle rounded-xl text-lg placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-folio-border-subtle resize-y"
                     />
                   </div>
                 )}
@@ -401,7 +403,7 @@ export function BioInterviewModal({
         )}
 
         {/* Footer with navigation */}
-        <div className="flex items-center justify-between px-8 py-4 border-t border-folio-border-subtle/50 bg-white/50">
+        <div className="flex items-center justify-between px-8 py-4 border-t border-folio-border-subtle/50 bg-surface-ground">
           <button
             onClick={handleBack}
             disabled={step === 'layer1' && currentQuestionIndex === 0}
@@ -414,7 +416,7 @@ export function BioInterviewModal({
           <button
             onClick={handleNext}
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-6 py-3 bg-[var(--text-primary)] text-white rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-folio-text-primary text-surface-canvas rounded-full text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span>
               {step === 'layer3' && currentQuestionIndex === LAYER_3_QUESTIONS.length - 1

@@ -38,9 +38,8 @@ export function ImportPhotoApproval({ importId, onPublished }: { importId: strin
     finally { lock.current = false; setBusy(false); }
   }
   return <section className={forms.section} aria-label="Publish imported photographs">
-    <p className={forms.eyebrow}>First, make your work visible</p>
-    <h2 className={forms.sectionTitle}>Your website. Your work. Your Folio.</h2>
-    <p className={`${forms.lede} mb-5`}>Add your imported projects and photographs to your public profile together. Review any selections below; rooms, tagging and interviews can come later.</p>
+    <h2 className={forms.sectionTitle}>{loaded && !projects.length ? 'Publication status' : 'Choose what goes on your profile'}</h2>
+    {(!loaded || projects.length > 0) && <p className={`${forms.lede} mb-5`}>Approve the selection together, or choose individual photographs below. You can add tags and tell each project&apos;s story later.</p>}
     {error && <p role="alert" className={forms.notice}>{error} <button className={forms.quiet} disabled={busy} onClick={() => setRevision(v => v + 1)}>Reload photographs</button></p>}
     {notice && <p role="status" className={forms.notice}>{notice} <Link className={forms.quiet} href={profileHref}>View my profile</Link></p>}
     {!loaded && !error && <p role="status">Preparing your photo selection.</p>}
@@ -67,6 +66,5 @@ export function ImportPhotoApproval({ importId, onPublished }: { importId: strin
       </details>
     </>}
     {loaded && !projects.length && !notice && <p className={forms.help}>No unpublished imported photographs are waiting for approval. <Link className={forms.quiet} href={profileHref}>View my profile</Link></p>}
-    {loaded && !projects.length && <p className={`${forms.help} mt-4`}>Next, confirm your media coverage below. Then add tags and answer the project interviews to make your experience and design decisions easier to discover.</p>}
   </section>;
 }

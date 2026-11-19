@@ -43,12 +43,13 @@ export default function FeedFilters({
         {FILTERS.map(filter => (
           <button
             key={filter.id}
+            aria-pressed={activeFilter === filter.id}
             onClick={() => updateParams('filter', filter.id)}
             className="px-4 py-1.5 text-xs rounded-full transition-all"
             style={{
-              backgroundColor: activeFilter === filter.id ? '#2C2825' : 'transparent',
-              color: activeFilter === filter.id ? 'var(--surface-ground)' : '#6B635B',
-              border: activeFilter === filter.id ? 'none' : '1px solid #D4CEC6',
+              backgroundColor: activeFilter === filter.id ? 'var(--folio-text-primary)' : 'transparent',
+              color: activeFilter === filter.id ? 'var(--surface-ground)' : 'var(--folio-text-secondary)',
+              border: activeFilter === filter.id ? 'none' : '1px solid var(--folio-border-strong)',
             }}
           >
             {filter.label}
@@ -65,10 +66,9 @@ export default function FeedFilters({
           onChange={e => updateParams('sort', e.target.value)}
           className="text-xs px-4 py-1.5 pr-8 rounded-full border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1"
           style={{
-            borderColor: '#D4CEC6',
-            color: '#6B635B',
+            borderColor: 'var(--folio-border-strong)',
+            color: 'var(--folio-text-secondary)',
             backgroundColor: 'transparent',
-            focusRing: '#8B8178',
           }}
         >
           {SORTS.map(sort => (
@@ -91,7 +91,7 @@ function ChevronDownIcon() {
       height="12"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#8B8178"
+      stroke="var(--folio-text-secondary)"
       strokeWidth="2"
     >
       <path d="M6 9l6 6 6-6" />

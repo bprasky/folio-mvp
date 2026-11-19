@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -285,7 +287,7 @@ export default function OrgSettingsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
-        <p className="text-sm" style={{ color: '#8B8178' }}>Loading...</p>
+        <p className="text-sm" style={{ color: 'var(--folio-text-secondary)' }}>Loading...</p>
       </div>
     );
   }
@@ -294,14 +296,14 @@ export default function OrgSettingsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div className="text-center">
-          <h3 className="text-lg font-medium mb-2" style={{ color: '#2C2825' }}>Access Denied</h3>
-          <p className="text-sm mb-4" style={{ color: '#8B8178' }}>
+          <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--folio-text-primary)' }}>Access Denied</h3>
+          <p className="text-sm mb-4" style={{ color: 'var(--folio-text-secondary)' }}>
             You need admin or owner access to manage this organization.
           </p>
           <button
             onClick={() => router.push(`/org/${orgId}`)}
             className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-            style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+            style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
           >
             Go Back
           </button>
@@ -316,16 +318,16 @@ export default function OrgSettingsPage() {
         <div className="mb-8">
           <h1
             className="text-3xl italic mb-2"
-            style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
+            style={{ fontFamily: 'var(--font-headline)', color: 'var(--folio-text-primary)', fontWeight: 'var(--w-body)' }}
           >
             {orgName || 'Organization'} settings
           </h1>
-          <p className="text-sm" style={{ color: '#8B8178' }}>
+          <p className="text-sm" style={{ color: 'var(--folio-text-secondary)' }}>
             Customize your public page and manage your organization’s members and permissions.
           </p>
           <button
             onClick={() => router.push(`/org/${orgId}/edit`)}
-            className="mt-3 text-xs transition-opacity hover:opacity-70"
+            className="mt-3 text-xs transition-opacity hover:underline"
             style={{ color: 'var(--folio-gold)' }}
           >
             Edit firm details and biography
@@ -337,17 +339,17 @@ export default function OrgSettingsPage() {
         {pendingRequests.length > 0 && (
           <section
             className="mb-10 p-5 rounded-2xl border"
-            style={{ borderColor: '#E8E4DF', backgroundColor: '#FFFFFF' }}
+            style={{ borderColor: 'var(--folio-border-subtle)', backgroundColor: 'var(--surface-canvas)' }}
             aria-label="Pending join requests"
           >
             <div className="flex items-baseline justify-between mb-4">
               <h2
                 className="text-lg italic"
-                style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
+                style={{ fontFamily: 'var(--font-headline)', color: 'var(--folio-text-primary)', fontWeight: 'var(--w-body)' }}
               >
                 Pending requests
               </h2>
-              <span className="text-xs" style={{ color: '#8B8178' }}>
+              <span className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
                 {pendingRequests.length} waiting
               </span>
             </div>
@@ -366,11 +368,11 @@ export default function OrgSettingsPage() {
                   <li
                     key={req.id}
                     className="flex items-center gap-3 p-3 rounded-xl"
-                    style={{ backgroundColor: '#F5F3F0' }}
+                    style={{ backgroundColor: 'var(--surface-ground)' }}
                   >
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm overflow-hidden"
-                      style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                      style={{ backgroundColor: 'var(--surface-elevated)', color: 'var(--folio-text-secondary)' }}
                     >
                       {req.user.profileImage ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -384,16 +386,16 @@ export default function OrgSettingsPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: '#2C2825' }}>
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--folio-text-primary)' }}>
                         {name}
                       </p>
-                      <p className="text-xs truncate" style={{ color: '#8B8178' }}>
+                      <p className="text-xs truncate" style={{ color: 'var(--folio-text-secondary)' }}>
                         {req.user.email}
                       </p>
                       {req.message ? (
                         <p
                           className="text-xs mt-1 italic"
-                          style={{ color: '#6B635B' }}
+                          style={{ color: 'var(--folio-text-secondary)' }}
                         >
                           &ldquo;{req.message}&rdquo;
                         </p>
@@ -404,8 +406,7 @@ export default function OrgSettingsPage() {
                         type="button"
                         onClick={() => handleRequestAction(req.id, 'reject')}
                         disabled={isPending}
-                        className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                        style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+                        className={`px-3 py-1.5 text-xs rounded-full transition-all ${controls.secondary}`}
                       >
                         {isPending ? '…' : 'Decline'}
                       </button>
@@ -413,8 +414,7 @@ export default function OrgSettingsPage() {
                         type="button"
                         onClick={() => handleRequestAction(req.id, 'approve')}
                         disabled={isPending}
-                        className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                        style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+                        className={`px-3 py-1.5 text-xs rounded-full transition-all ${controls.primary}`}
                       >
                         {isPending ? 'Saving…' : 'Approve'}
                       </button>
@@ -425,7 +425,7 @@ export default function OrgSettingsPage() {
             </ul>
 
             {requestError ? (
-              <p className="text-xs mt-3" style={{ color: '#A14040' }} role="alert">
+              <p className="text-xs mt-3" style={{ color: 'var(--folio-text-primary)' }} role="alert">
                 {requestError}
               </p>
             ) : null}
@@ -435,17 +435,17 @@ export default function OrgSettingsPage() {
         {members.length > 0 && currentUserOrgRole && (
           <section
             className="mb-10 p-5 rounded-2xl border"
-            style={{ borderColor: '#E8E4DF', backgroundColor: '#FFFFFF' }}
+            style={{ borderColor: 'var(--folio-border-subtle)', backgroundColor: 'var(--surface-canvas)' }}
             aria-label="Members"
           >
             <div className="flex items-baseline justify-between mb-4">
               <h2
                 className="text-lg italic"
-                style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
+                style={{ fontFamily: 'var(--font-headline)', color: 'var(--folio-text-primary)', fontWeight: 'var(--w-body)' }}
               >
                 Members
               </h2>
-              <span className="text-xs" style={{ color: '#8B8178' }}>
+              <span className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
                 {members.length} total
               </span>
             </div>
@@ -471,11 +471,11 @@ export default function OrgSettingsPage() {
                   <li
                     key={m.id}
                     className="flex items-center gap-3 p-3 rounded-xl"
-                    style={{ backgroundColor: '#F5F3F0' }}
+                    style={{ backgroundColor: 'var(--surface-ground)' }}
                   >
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm overflow-hidden"
-                      style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                      style={{ backgroundColor: 'var(--surface-elevated)', color: 'var(--folio-text-secondary)' }}
                     >
                       {m.profileImage ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -485,15 +485,15 @@ export default function OrgSettingsPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: '#2C2825' }}>
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--folio-text-primary)' }}>
                         {name}
                         {isSelf ? (
-                          <span className="ml-2 text-xs" style={{ color: '#8B8178' }}>
+                          <span className="ml-2 text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
                             (you)
                           </span>
                         ) : null}
                       </p>
-                      <p className="text-xs truncate" style={{ color: '#8B8178' }}>
+                      <p className="text-xs truncate" style={{ color: 'var(--folio-text-secondary)' }}>
                         {m.email}
                       </p>
                     </div>
@@ -503,11 +503,11 @@ export default function OrgSettingsPage() {
                           value={m.orgRole}
                           onChange={(e) => handleRoleChange(m, e.target.value as OrgRole)}
                           disabled={isPending}
-                          className="text-xs rounded-full px-3 py-1.5 border outline-none disabled:opacity-50"
+                          className="text-xs rounded-full px-3 py-1.5 border outline-none disabled:border-dashed disabled:cursor-not-allowed"
                           style={{
-                            borderColor: '#D4CEC6',
+                            borderColor: 'var(--folio-border-strong)',
                             backgroundColor: 'var(--surface-ground)',
-                            color: '#2C2825',
+                            color: 'var(--folio-text-primary)',
                           }}
                           aria-label={`Role for ${name}`}
                         >
@@ -523,7 +523,7 @@ export default function OrgSettingsPage() {
                       ) : (
                         <span
                           className="text-xs px-3 py-1.5 rounded-full"
-                          style={{ backgroundColor: '#E8E4DF', color: '#5C554D' }}
+                          style={{ backgroundColor: 'var(--surface-elevated)', color: 'var(--folio-text-primary)' }}
                         >
                           {ROLE_LABEL[m.orgRole]}
                         </span>
@@ -533,8 +533,7 @@ export default function OrgSettingsPage() {
                           type="button"
                           onClick={() => handleRemoveMember(m)}
                           disabled={isPending}
-                          className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                          style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+                          className={`px-3 py-1.5 text-xs rounded-full transition-all ${controls.secondary}`}
                         >
                           {isPending ? '…' : isSelf ? 'Leave' : 'Remove'}
                         </button>
@@ -546,7 +545,7 @@ export default function OrgSettingsPage() {
             </ul>
 
             {memberError ? (
-              <p className="text-xs mt-3" style={{ color: '#A14040' }} role="alert">
+              <p className="text-xs mt-3" style={{ color: 'var(--folio-text-primary)' }} role="alert">
                 {memberError}
               </p>
             ) : null}
@@ -557,9 +556,9 @@ export default function OrgSettingsPage() {
               <form
                 onSubmit={handleInvite}
                 className="mt-5 pt-5 border-t flex flex-col gap-2"
-                style={{ borderColor: '#E8E4DF' }}
+                style={{ borderColor: 'var(--folio-border-subtle)' }}
               >
-                <label className="text-xs font-medium" style={{ color: '#6B635B' }}>
+                <label className="text-xs font-medium" style={{ color: 'var(--folio-text-secondary)' }}>
                   Add a member by email
                 </label>
                 <div className="flex gap-2">
@@ -571,9 +570,9 @@ export default function OrgSettingsPage() {
                     disabled={inviteSubmitting}
                     className="flex-1 px-4 py-2 text-sm rounded-full border outline-none transition-colors focus:border-[var(--folio-gold)]"
                     style={{
-                      borderColor: '#E8E4DF',
+                      borderColor: 'var(--folio-border-subtle)',
                       backgroundColor: 'var(--surface-ground)',
-                      color: '#2C2825',
+                      color: 'var(--folio-text-primary)',
                     }}
                   />
                   <select
@@ -582,9 +581,9 @@ export default function OrgSettingsPage() {
                     disabled={inviteSubmitting}
                     className="text-xs rounded-full px-3 py-2 border outline-none"
                     style={{
-                      borderColor: '#D4CEC6',
+                      borderColor: 'var(--folio-border-strong)',
                       backgroundColor: 'var(--surface-ground)',
-                      color: '#2C2825',
+                      color: 'var(--folio-text-primary)',
                     }}
                   >
                     {ROLE_ORDER.filter(
@@ -599,8 +598,7 @@ export default function OrgSettingsPage() {
                   <button
                     type="submit"
                     disabled={inviteSubmitting || !inviteEmail.trim()}
-                    className="px-4 py-2 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                    style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+                    className={`px-4 py-2 text-xs rounded-full transition-all ${controls.primary}`}
                   >
                     {inviteSubmitting ? 'Adding…' : 'Add'}
                   </button>
@@ -608,7 +606,7 @@ export default function OrgSettingsPage() {
                 {inviteMessage ? (
                   <p
                     className="text-xs"
-                    style={{ color: inviteMessage.tone === 'success' ? '#3A6B47' : '#A14040' }}
+                    style={{ color: 'var(--folio-text-primary)' }}
                     role={inviteMessage.tone === 'error' ? 'alert' : 'status'}
                   >
                     {inviteMessage.text}

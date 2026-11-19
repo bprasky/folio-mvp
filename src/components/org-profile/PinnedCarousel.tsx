@@ -46,13 +46,13 @@ export default function PinnedCarousel({ items }: PinnedCarouselProps) {
   return (
     <div
       className="border-b relative"
-      style={{ borderColor: '#E8E4DF', backgroundColor: '#F5F3F0' }}
+      style={{ borderColor: 'var(--folio-border-subtle)', backgroundColor: 'var(--surface-ground)' }}
     >
       <div className="max-w-6xl mx-auto px-6 py-4">
         <div className="flex items-center gap-4">
           <span
             className="text-xs uppercase tracking-wider flex-shrink-0"
-            style={{ color: '#8B8178' }}
+            style={{ color: 'var(--folio-text-secondary)' }}
           >
             Pinned
           </span>
@@ -72,17 +72,19 @@ export default function PinnedCarousel({ items }: PinnedCarouselProps) {
             <div className="flex gap-2 flex-shrink-0">
               <button
                 onClick={() => scroll('left')}
+                aria-label="Previous pinned item"
                 disabled={!canScrollLeft}
                 className="p-1 rounded-full disabled:opacity-30 transition-opacity"
-                style={{ color: '#6B635B' }}
+                style={{ color: 'var(--folio-text-secondary)' }}
               >
                 <ChevronLeft size={20} />
               </button>
               <button
                 onClick={() => scroll('right')}
+                aria-label="Next pinned item"
                 disabled={!canScrollRight}
                 className="p-1 rounded-full disabled:opacity-30 transition-opacity"
-                style={{ color: '#6B635B' }}
+                style={{ color: 'var(--folio-text-secondary)' }}
               >
                 <ChevronRight size={20} />
               </button>
@@ -118,7 +120,7 @@ function PinnedCard({ item }: { item: PinnedItem }) {
     >
       <div
         className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 relative"
-        style={{ backgroundColor: '#D4CEC6' }}
+        style={{ backgroundColor: 'var(--folio-border-strong)' }}
       >
         {item.data.image ? (
           <SafeImage
@@ -130,7 +132,7 @@ function PinnedCard({ item }: { item: PinnedItem }) {
         ) : (
           <div
             className="w-full h-full flex items-center justify-center text-xs"
-            style={{ color: '#8B8178' }}
+            style={{ color: 'var(--folio-text-secondary)' }}
           >
             {getBadgeLabel()[0]}
           </div>
@@ -140,19 +142,19 @@ function PinnedCard({ item }: { item: PinnedItem }) {
         <div className="flex items-center gap-2">
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+            style={{ backgroundColor: 'var(--surface-elevated)', color: 'var(--folio-text-secondary)' }}
           >
             {getBadgeLabel()}
           </span>
         </div>
         <p
           className="text-sm font-medium mt-1 truncate group-hover:underline"
-          style={{ color: '#2C2825' }}
+          style={{ color: 'var(--folio-text-primary)' }}
         >
           {item.data.title}
         </p>
         {item.data.subtitle && (
-          <p className="text-xs truncate" style={{ color: '#8B8178' }}>
+          <p className="text-xs truncate" style={{ color: 'var(--folio-text-secondary)' }}>
             {item.data.subtitle}
           </p>
         )}

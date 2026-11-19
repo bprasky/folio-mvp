@@ -160,21 +160,22 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
     location: null, foundedYear: null, specialties: [], serviceRegions: [], projectTypes: [], teamSizeRange: null },
     appearance: defaultOrgAppearance(), cover: null, projectCount: 0 };
   const renderPreview = props => require('react-dom/server').renderToStaticMarkup(require('react').createElement(WorkspaceReadyPreview, {
-    profile: previewProfile, personName: 'Jane', description: '', location: '', bio: '', busy: false, canContribute: true,
-    onOpenProject: () => {}, onReviewDetails: () => {}, ...props,
+    profile: previewProfile, description: '', location: '', busy: false, canContribute: true,
+    onOpenProject: () => {}, children: 'Private publication controls', ...props,
   }));
   const previewProject = { id: 'project', title: 'Harbor', isPublic: false, photos: [{ ...landscape, alt: 'Living room' }] };
-  assert.match(renderPreview({ projects: [previewProject] }), /Add photos to my profile/);
-  assert.match(renderPreview({ projects: [previewProject] }), /Add them to your profile now; tell the story later/);
-  assert.doesNotMatch(renderPreview({ projects: [previewProject] }), /Start.*interview<|Begin the interview/);
-  assert.match(renderPreview({ projects: [previewProject] }), /Private draft/);
-  assert.match(renderPreview({ projects: [previewProject] }), /Add photos to profile/);
-  const resumedPreview = renderPreview({ projects: [{ ...previewProject, hasSavedProgress: true }] });
-  assert.match(resumedPreview, /Add photos to my profile/);
-  assert.doesNotMatch(resumedPreview, /Upload a finish schedule|Tag products manually/);
-  assert.doesNotMatch(renderPreview({ projects: [previewProject], canContribute: false }), /Upload a finish schedule|Tag products manually/);
-  assert.match(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Add photographs/);
-  assert.doesNotMatch(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Upload a finish schedule/);
+  const preview = renderPreview({ projects: [previewProject] });
+  assert.ok(preview.indexOf('Private publication controls') < preview.indexOf('Your imported projects'));
+  assert.match(preview, /Private draft/);
+  assert.match(preview, /Review photographs/);
+  assert.doesNotMatch(preview, /Start.*interview<|Begin the interview/);
+  assert.match(renderPreview({ projects: [previewProject], canContribute: false }), /Open project/);
+  const photoLess = renderPreview({ projects: [{ ...previewProject, photos: [] }] });
+  assert.match(photoLess, /Add photographs/);
+  assert.doesNotMatch(photoLess, /mosaic-card-link/);
+  const longPreview = renderPreview({ projects: Array.from({ length: 7 }, (_, index) => ({ ...previewProject, id: String(index) })) });
+  assert.match(longPreview, /Show 3 more projects/);
+  assert.equal((longPreview.slice(0, longPreview.indexOf('Show 3 more projects')).match(/mosaic-card-link/g) || []).length, 4);
   assert.match(renderPreview({ projects: [{ ...previewProject, isPublic: true }] }), />Published</);
   const customPreview = renderPreview({ projects: [previewProject], profile: { ...previewProfile, cover: { url: '/chosen-cover' },
     appearance: { ...defaultOrgAppearance(), backgroundColor: '#123456', introduction: 'The saved studio introduction.',

@@ -19,17 +19,17 @@ export function RolePermissionsMatrix({ membersCanPublish = true }: { membersCan
   return (
     <section
       className="mb-10 p-5 rounded-2xl border"
-      style={{ borderColor: '#E8E4DF', backgroundColor: '#FFFFFF' }}
+      style={{ borderColor: 'var(--folio-border-subtle)', backgroundColor: 'var(--surface-canvas)' }}
       aria-label="Roles and permissions"
     >
       <div className="mb-4">
         <h2
           className="text-lg italic mb-1"
-          style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
+          style={{ fontFamily: 'var(--font-headline)', color: 'var(--folio-text-primary)', fontWeight: 'var(--w-body)' }}
         >
           Roles &amp; permissions
         </h2>
-        <p className="text-xs" style={{ color: '#8B8178' }}>
+        <p className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
           What each role can do in your firm. Member posting follows your setting above.
         </p>
       </div>
@@ -40,12 +40,12 @@ export function RolePermissionsMatrix({ membersCanPublish = true }: { membersCan
           <div
             key={r}
             className="p-3 rounded-xl"
-            style={{ backgroundColor: '#F5F3F0' }}
+            style={{ backgroundColor: 'var(--surface-ground)' }}
           >
-            <p className="text-sm font-medium mb-1" style={{ color: '#2C2825' }}>
+            <p className="text-sm font-medium mb-1" style={{ color: 'var(--folio-text-primary)' }}>
               {ROLE_LABEL[r]}
             </p>
-            <p className="text-xs leading-relaxed" style={{ color: '#6B635B' }}>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--folio-text-secondary)' }}>
               {ROLE_TAGLINE[r]}
             </p>
           </div>
@@ -59,7 +59,7 @@ export function RolePermissionsMatrix({ membersCanPublish = true }: { membersCan
             <tr>
               <th
                 className="text-left py-2 pr-4 font-medium sticky left-0"
-                style={{ color: '#6B635B', backgroundColor: '#FFFFFF' }}
+                style={{ color: 'var(--folio-text-secondary)', backgroundColor: 'var(--surface-canvas)' }}
               >
                 Capability
               </th>
@@ -67,7 +67,7 @@ export function RolePermissionsMatrix({ membersCanPublish = true }: { membersCan
                 <th
                   key={r}
                   className="text-center py-2 px-3 font-medium"
-                  style={{ color: '#6B635B' }}
+                  style={{ color: 'var(--folio-text-secondary)' }}
                 >
                   {ROLE_LABEL[r]}
                 </th>
@@ -79,14 +79,14 @@ export function RolePermissionsMatrix({ membersCanPublish = true }: { membersCan
               <tr
                 key={cap}
                 style={{
-                  backgroundColor: idx % 2 === 0 ? '#FAFAF8' : '#FFFFFF',
+                  backgroundColor: idx % 2 === 0 ? 'var(--surface-ground)' : 'var(--surface-canvas)',
                 }}
               >
                 <td
                   className="py-2 pr-4 sticky left-0"
                   style={{
-                    color: '#2C2825',
-                    backgroundColor: idx % 2 === 0 ? '#FAFAF8' : '#FFFFFF',
+                    color: 'var(--folio-text-primary)',
+                    backgroundColor: idx % 2 === 0 ? 'var(--surface-ground)' : 'var(--surface-canvas)',
                   }}
                 >
                   {CAPABILITY_LABEL[cap]}
@@ -96,13 +96,13 @@ export function RolePermissionsMatrix({ membersCanPublish = true }: { membersCan
                     {can(r, cap, { membersCanPublish }) ? (
                       <Check
                         className="inline-block w-3.5 h-3.5"
-                        style={{ color: '#2C2825' }}
+                        style={{ color: 'var(--folio-text-primary)' }}
                         aria-label="Yes"
                       />
                     ) : (
                       <Minus
                         className="inline-block w-3.5 h-3.5"
-                        style={{ color: '#D4CEC6' }}
+                        style={{ color: 'var(--folio-border-strong)' }}
                         aria-label="No"
                       />
                     )}
@@ -114,7 +114,7 @@ export function RolePermissionsMatrix({ membersCanPublish = true }: { membersCan
         </table>
       </div>
 
-      <p className="text-xs mt-4" style={{ color: '#A69E96' }}>
+      <p className="text-xs mt-4" style={{ color: 'var(--folio-text-secondary)' }}>
         Members can only be invited at roles below the inviter&rsquo;s own.
         Owner is unique — exactly one per organization; transfer ownership
         from the Members section to change it.

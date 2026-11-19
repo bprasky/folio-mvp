@@ -8,11 +8,10 @@ import type { WorkspacePreviewProject } from '@/lib/workspace-import/types';
 export type WorkspaceProfilePreview = Pick<OrgAppearanceData, 'org' | 'appearance' | 'cover' | 'projectCount'>;
 
 type Props = {
-  publicationActions?: ReactNode;
-  profile: WorkspaceProfilePreview; personName: string; description: string; location: string;
-  logo?: string | null; bio: string; projects: WorkspacePreviewProject[]; busy: boolean; canContribute: boolean;
-  onOpenProject: (id: string, action: 'open' | 'schedule' | 'tag') => void;
-  onReviewDetails: () => void;
+  profile: WorkspaceProfilePreview; description: string; location: string; logo?: string | null;
+  projects: WorkspacePreviewProject[]; busy: boolean; canContribute: boolean;
+  onOpenProject: (id: string, reviewPhotos: boolean) => void;
+  children: ReactNode;
 };
 
 // Only used for automatic covers in this owner-only preview. Saved appearance
@@ -24,42 +23,37 @@ export function workspaceCover(projects: WorkspacePreviewProject[]) {
   return photos.reduce<typeof photos[number] | undefined>((best, photo) => !best || score(photo) > score(best) ? photo : best, undefined);
 }
 
-export function WorkspaceReadyPreview({ profile, personName, description, location, logo, bio, projects, busy, canContribute, onOpenProject, onReviewDetails, publicationActions }: Props) {
+export function WorkspaceReadyPreview({ profile, description, location, logo, projects, busy, canContribute, onOpenProject, children }: Props) {
   const automaticCover = workspaceCover(projects);
   const cover = profile.appearance.cover.kind === 'auto' && automaticCover ? automaticCover : profile.cover;
   const org = { ...profile.org, description, location, logo: logo ?? null };
-  const first = canContribute ? projects.find(project => !project.isPublic && project.hasSavedProgress)
-    || projects.find(project => !project.isPublic && project.photos.length) : undefined;
-  const items = projects.map(project => ({
-    id: project.id, title: project.title, imageUrl: project.photos[0]?.url, isDraft: !project.isPublic,
-    actionLabel: project.isPublic || !canContribute ? 'Open project' : project.photos.length ? 'Add photos to profile' : 'Add photographs',
+  const photographed = projects.filter(project => project.photos.length).map(project => ({
+    id: project.id, title: project.title, imageUrl: project.photos[0].url, isDraft: !project.isPublic,
+    actionLabel: project.isPublic || !canContribute ? 'Open project' : 'Review photographs',
   }));
+  const withoutPhotos = projects.filter(project => !project.photos.length);
+  const open = (id: string) => {
+    const project = projects.find(candidate => candidate.id === id);
+    if (project) onOpenProject(id, canContribute && !project.isPublic && project.photos.length > 0);
+  };
   return <section className={`workspace-preview ${profileStyles.page}`} style={profilePageStyle(profile.appearance.backgroundColor)} aria-label="Your private profile preview">
     <div className="workspace-preview__welcome">
       <div><p className="workspace-preview__eyebrow">Your private preview</p><h1 className="folio-h2">Your work, already taking shape.</h1></div>
-      <a href="#profile-details" onClick={onReviewDetails}>Review imported details</a>
     </div>
     <OrgProfileHero org={org} appearance={profile.appearance} cover={cover}
       projectCount={profile.projectCount + projects.filter(project => !project.isPublic).length} year={new Date().getFullYear()} preview />
-    {publicationActions ?? (first ? <div className={`workspace-preview__next ${profileStyles.neutralContent}`}>
-      <div><p className="workspace-preview__eyebrow">Next: complete your Folio profile</p>
-        <h2>Review {first.title}.</h2>
-        <p>Choose your title, cover and photographs. Add them to your profile now; tell the story later.</p>
-      </div>
-      <div className="workspace-preview__next-actions">
-        <button type="button" className="auth-submit" disabled={busy} onClick={() => onOpenProject(first.id, 'open')}>Add photos to my profile <span aria-hidden="true">↗</span></button>
-      </div>
-    </div> : <p className="workspace-preview__empty">{projects.length ? 'Your projects are here. Open one below to continue.' : 'Review your imported details, then add photographs to begin your first project.'}</p>)}
-    {projects.length ? <section className="workspace-preview__projects" aria-label="Your imported projects">
-      <div className="workspace-preview__section-heading"><h2>Your projects</h2><p>Choose which photographs to share on your profile. Interviews come later.</p></div>
-      <FlowMosaic events={items} preserveOrder disabled={busy} onSelect={id => {
-        const project = projects.find(candidate => candidate.id === id);
-        if (project) onOpenProject(id, 'open');
-      }} />
-    </section> : null}
-    {description || bio ? <div className={`workspace-preview__about ${profileStyles.neutralContent}`}>
-      {description ? <section><h2 className="workspace-preview__eyebrow">About the practice</h2><p className="workspace-preview__description">{description}</p></section> : null}
-      {bio ? <section><h2 className="workspace-preview__eyebrow">{personName || 'Your background'}</h2><p className="workspace-preview__description">{bio}</p></section> : null}
-    </div> : null}
+    {children}
+    {projects.length > 0 && <section className="workspace-preview__projects" aria-label="Your imported projects">
+      <div className="workspace-preview__section-heading"><h2>Your projects</h2><p>{projects.length} {projects.length === 1 ? 'project' : 'projects'} from your website</p></div>
+      {photographed.length > 0 && <FlowMosaic events={photographed.slice(0, 4)} preserveOrder disabled={busy} onSelect={open} />}
+      {photographed.length > 4 && <details className="workspace-preview__more"><summary>Show {photographed.length - 4} more {photographed.length === 5 ? 'project' : 'projects'}</summary>
+        <FlowMosaic events={photographed.slice(4)} preserveOrder disabled={busy} onSelect={open} />
+      </details>}
+      {!!withoutPhotos.length && <ul className="workspace-preview__list">{withoutPhotos.map(project => <li key={project.id}>
+        <button type="button" disabled={busy} onClick={() => open(project.id)}>
+          <span>{project.title}<small>{project.isPublic ? 'Published' : 'Private draft'}</small></span>
+          <span>{canContribute ? 'Add photographs' : 'Open project'} <span aria-hidden="true">→</span></span>
+        </button></li>)}</ul>}
+    </section>}
   </section>;
 }

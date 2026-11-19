@@ -87,16 +87,16 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
       <div className="text-center py-16">
         <div
           className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-          style={{ background: '#F0EDE9' }}
+          style={{ background: 'var(--surface-ground)' }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8B8178" strokeWidth="1.5">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--folio-text-secondary)" strokeWidth="1.5">
             <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <p style={{ fontSize: 'var(--type-body)', color: '#8B8178' }}>
+        <p style={{ fontSize: 'var(--type-body)', color: 'var(--folio-text-secondary)' }}>
           No products yet
         </p>
-        <p style={{ fontSize: 'var(--type-meta)', color: '#A69E96', marginTop: '4px' }}>
+        <p style={{ fontSize: 'var(--type-meta)', color: 'var(--folio-text-secondary)', marginTop: '4px' }}>
           Products tagged in projects will appear here.
         </p>
       </div>
@@ -110,12 +110,13 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
           {categories.map(c => (
             <button
               key={c}
+              aria-pressed={category === c}
               onClick={() => setCategory(c)}
               className="px-3.5 py-1.5 rounded-full text-[var(--type-meta)] border transition-colors"
               style={{
-                borderColor: category === c ? '#2C2825' : '#E8E4DF',
-                backgroundColor: category === c ? '#2C2825' : 'transparent',
-                color: category === c ? 'var(--surface-ground)' : '#8B8178',
+                borderColor: category === c ? 'var(--folio-text-primary)' : 'var(--folio-border-subtle)',
+                backgroundColor: category === c ? 'var(--folio-text-primary)' : 'transparent',
+                color: category === c ? 'var(--surface-ground)' : 'var(--folio-text-secondary)',
                 cursor: 'pointer'
               }}
             >
@@ -204,7 +205,7 @@ function OrgProductModal({
     >
       <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <motion.div
-        className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-surface-canvas text-folio-text-primary shadow-2xl"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -212,9 +213,10 @@ function OrgProductModal({
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors"
+          aria-label="Close product"
+          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-surface-canvas text-folio-text-primary flex items-center justify-center hover:bg-surface-ground transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C2825" strokeWidth="2" strokeLinecap="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -257,25 +259,25 @@ function OrgProductModal({
 
           <div className="md:w-2/5 flex flex-col overflow-y-auto p-6 md:p-8">
             <div className="mb-6">
-              <h2 className="text-xl font-semibold" style={{ color: '#2C2825' }}>{product.name}</h2>
+              <h2 className="text-xl font-semibold" style={{ color: 'var(--folio-text-primary)' }}>{product.name}</h2>
               {product.vendor && (
-                <p className="text-[var(--type-ui)] mt-1" style={{ color: '#A69E96' }}>{product.vendor}</p>
+                <p className="text-[var(--type-ui)] mt-1" style={{ color: 'var(--folio-text-secondary)' }}>{product.vendor}</p>
               )}
               {formattedPrice && (
-                <p className="text-[var(--type-ui)] mt-1 font-medium" style={{ color: '#5C554D' }}>{formattedPrice}</p>
+                <p className="text-[var(--type-ui)] mt-1 font-medium" style={{ color: 'var(--folio-text-primary)' }}>{formattedPrice}</p>
               )}
             </div>
             {product.category && (
               <div className="mb-6">
-                <span className="inline-block px-3 py-1 rounded-full text-[var(--type-meta)]" style={{ backgroundColor: '#F0EDE9', color: '#8B8178' }}>
+                <span className="inline-block px-3 py-1 rounded-full text-[var(--type-meta)]" style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}>
                   {getCategoryLabel(product.category)}
                 </span>
               </div>
             )}
             {product.projectCount > 0 && (
               <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: 'var(--surface-ground)' }}>
-                <p className="text-[var(--type-meta)]" style={{ color: '#8B8178' }}>
-                  Featured in <span className="font-medium" style={{ color: '#5C554D' }}>{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span>
+                <p className="text-[var(--type-meta)]" style={{ color: 'var(--folio-text-secondary)' }}>
+                  Featured in <span className="font-medium" style={{ color: 'var(--folio-text-primary)' }}>{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span>
                 </p>
               </div>
             )}
@@ -284,7 +286,7 @@ function OrgProductModal({
                 <a
                   href={product.storyHref}
                   className="w-full py-3 px-6 rounded-xl text-[var(--type-ui)] font-medium border text-center block no-underline transition-colors"
-                  style={{ borderColor: '#E8E4DF', color: '#5C554D' }}
+                  style={{ borderColor: 'var(--folio-border-subtle)', color: 'var(--folio-text-primary)' }}
                 >
                   View in Project
                 </a>

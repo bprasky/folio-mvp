@@ -46,7 +46,7 @@ function ReviewFeature({ item, projects, busy, save }: { item: CoverageReviewIte
   </form>;
 }
 
-export function CoverageManager({ scope, autoDiscover = false, sweepId }: { scope: CoverageScope; autoDiscover?: boolean; sweepId?: string }) {
+export function CoverageManager({ scope, autoDiscover = false, sweepId, compact = false }: { scope: CoverageScope; autoDiscover?: boolean; sweepId?: string; compact?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<Review>({ items: [], projects: [] });
@@ -96,10 +96,10 @@ export function CoverageManager({ scope, autoDiscover = false, sweepId }: { scop
     finally { if (current === generation.current) { lock.current = false; setBusy(false); } }
   }
   const visible = data.items.filter(item => dismissed || item.state !== 'dismissed');
-  return <section className={styles.offer}>
-    <div className={styles.intro}><h2 className={styles.title}>Bring your story together.</h2>
-      <p className={styles.copy}>Find features and interviews about your work. Choose what belongs on your Folio, and connect it to the projects behind it.</p></div>
-    <button type="button" className={forms.secondary} onClick={() => { setOpen(true); void request('GET'); }}>{data.items.some(item => item.state === 'pending') ? `Review ${data.items.filter(item => item.state === 'pending').length} possible ${data.items.filter(item => item.state === 'pending').length === 1 ? 'feature' : 'features'}` : 'Find & manage coverage'}</button>
+  return <section className={compact ? undefined : styles.offer}>
+    {!compact && <div className={styles.intro}><h2 className={styles.title}>Bring your story together.</h2>
+      <p className={styles.copy}>Find features and interviews about your work. Choose what belongs on your Folio, and connect it to the projects behind it.</p></div>}
+    <button type="button" className={compact ? forms.quiet : forms.secondary} onClick={() => { setOpen(true); void request('GET'); }}>{data.items.some(item => item.state === 'pending') ? `Review ${data.items.filter(item => item.state === 'pending').length} possible ${data.items.filter(item => item.state === 'pending').length === 1 ? 'feature' : 'features'}` : 'Find & manage coverage'}</button>
     {autoDiscover && !open && (busy || error || notice) && <p role={error ? 'alert' : 'status'} className={`${forms.help} mt-3`}>{busy ? 'Looking for published features while you review your photographs.' : error || notice}</p>}
     <Dialog open={open} onOpenChange={setOpen} placement="right" backdropClassName="bg-black/40">
       <DialogContent placement="right" className={forms.sheet} aria-describedby="coverage-review-description">
