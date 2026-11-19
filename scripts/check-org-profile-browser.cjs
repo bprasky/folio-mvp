@@ -20,7 +20,7 @@ const source = `
 import React from 'react'; import {createRoot} from 'react-dom/client';
 import Settings from './src/app/org/[orgId]/settings/page';
 import Hero from './src/components/org-profile/OrgProfileHero';
-import CoverEditor from './src/components/org-profile/OrgCoverEditor';
+import {StudioProfileTools} from './src/components/org-profile/StudioProfileTools';
 import Tabs from './src/components/org-profile/OrgProfileTabs';
 import Feed from './src/components/org-profile/OrgProfileFeed';
 import Contact from './src/components/org-profile/OrgContactTab';
@@ -30,7 +30,7 @@ const d=window.fixture;
 const tab=new URLSearchParams(location.search).get('tab')||'feed';
 const member=Boolean(d.role);
 function App(){return location.pathname.endsWith('/settings') ? <Settings/> : <div className={styles.page} style={profilePageStyle(d.appearance.backgroundColor)}>
-<Hero org={d.org} appearance={d.appearance} cover={resolveProfileCover(d.appearance,d.projects)} projectCount={d.projectCount} year={2026} isMember={member} isAdmin={d.role==='ADMIN'||d.role==='OWNER'} tools={d.role==='ADMIN'?<CoverEditor orgId="firm"/>:null}/>
+<Hero org={d.org} appearance={d.appearance} cover={resolveProfileCover(d.appearance,d.projects)} projectCount={d.projectCount} year={2026} isMember={member} tools={d.role==='ADMIN'?<StudioProfileTools orgId="firm" next={null} isAdmin canInvite={false}>{null}</StudioProfileTools>:null}/>
 <div id="profile-content"><Tabs orgId="firm" activeTab={tab}/><div style={{padding:20}}>{tab==='contact' ? <Contact org={d.org} isMember={member} currentUser={member?{id:'member',name:'Member'}:null}/> : <Feed orgId="firm" initialFilter={new URLSearchParams(location.search).get('filter')||'all'} initialSort="featured" projectCount={4}/>}</div></div></div>}
 createRoot(document.getElementById('root')).render(<App/>);`;
 
@@ -50,7 +50,7 @@ async function build() {
   });
   const globals = fs.readFileSync(path.join(root, 'src/app/globals.css'), 'utf8').replace(/@import\s+"([^"]+)";/g, (_, file) => file.startsWith('../styles/') ? fs.readFileSync(path.resolve(root, 'src/app', file), 'utf8') : '');
   const config = require(path.join(root, 'tailwind.config.js'));
-  config.content = [path.join(root, 'src/components/org-profile/**/*.tsx'), path.join(root, 'src/components/feed/**/*.tsx'), path.join(root, 'src/app/org/**/*.tsx')];
+  config.content = [path.join(root, 'src/components/org-profile/**/*.tsx'), path.join(root, 'src/components/feed/**/*.tsx'), path.join(root, 'src/app/org/**/*.tsx'), path.join(root, 'src/components/ui/dialog.tsx')];
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
   let headline, body;
   for (const file of (process.env.ORG_PROFILE_TEST_SYSTEM_FONTS ? [] : fs.readdirSync(path.join(root, '.next/static/css'))).filter(file => file.endsWith('.css'))) {
@@ -164,8 +164,15 @@ async function main() {
     for (const viewer of ['ADMIN', 'MEMBER', null]) {
       role = viewer;
       await go('/org/firm');
-      const tools = await page.$$eval('nav[aria-label="Manage profile"] a', links => links.map(link => link.getAttribute('href')));
-      assert.deepEqual(tools, viewer === 'ADMIN' ? ['/org/firm/settings#appearance', '/org/firm/edit'] : []);
+      assert.equal(await page.$('[role=dialog]'), null, 'private controls start closed');
+      const canManage = await page.$$eval('button', buttons => buttons.some(button => button.textContent.trim() === 'Manage profile'));
+      assert.equal(canManage, viewer === 'ADMIN');
+      if (canManage) {
+        await button('Manage profile').click();
+        await page.waitForSelector('[role=dialog] a[href="/org/firm/edit"]');
+        assert.ok(await page.$('[role=dialog] a[href="/org/firm/settings#appearance"]'));
+        await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]', { hidden: true });
+      }
       assert.equal(await page.$('a[href="/org/firm/vendors"]'), null);
       assert.equal(Boolean(await page.$('section a[href*="tab=contact"]')), true, 'owners see the same public contact action');
     }
@@ -178,7 +185,7 @@ async function main() {
     assert.equal(signIn.searchParams.get('callbackUrl'), '/org/firm?tab=contact#profile-content');
     role = 'ADMIN'; saved = structuredClone(initial);
     await go('/org/firm'); await button('Edit cover').click(); await page.waitForSelector('[role=dialog]');
-    await page.click('button[aria-label="Next portrait suggestion"]');
+    await page.locator('button[aria-label="Next portrait suggestion"]').click();
     assert.ok(await page.$eval('[role=dialog]', node => node.textContent.includes('2 of 2')));
     await button('Use this photograph').click(); await page.waitForFunction(() => document.body.textContent.includes('Cutout ready.'));
     await page.$eval('input[placeholder="Names and roles"]', node => { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(node, 'Jane and Alex · Founders'); node.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -186,13 +193,20 @@ async function main() {
     assert.equal(saved.portrait.treatment, 'cutout'); assert.equal(saved.portrait.caption, 'Jane and Alex · Founders');
     for (const width of [1440, 390, 320]) for (const theme of ['light', 'dark']) {
       await page.setViewport({ width, height: 1000 }); await go('/org/firm');
-      await page.evaluate(theme => document.documentElement.classList.toggle('dark', theme === 'dark'), theme);
+      await page.evaluate(theme => { document.documentElement.dataset.theme = theme; document.documentElement.classList.toggle('dark', theme === 'dark'); }, theme);
+      const canvas = await page.$eval('#root > div', node => getComputedStyle(node).backgroundColor);
+      assert.equal(canvas, theme === 'dark' ? 'rgb(27, 27, 25)' : 'rgb(255, 255, 255)', 'the requested theme must actually reach the profile canvas');
       await page.waitForSelector('figure');
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `portrait overflow ${width}/${theme}`);
       const bounds = await page.evaluate(() => { const a = document.querySelector('h1').getBoundingClientRect(), b = document.querySelector('figure').getBoundingClientRect(); return { titleRight: a.right, titleTop: a.top, portraitLeft: b.left, portraitBottom: b.bottom }; });
       assert.ok(width > 700 ? bounds.titleRight <= bounds.portraitLeft : bounds.titleTop >= bounds.portraitBottom, `portrait overlaps title at ${width}`);
       await page.screenshot({ path: path.join(out, `portrait-${width}-${theme}.png`), fullPage: true });
     }
+    const portraitAppearance = structuredClone(saved);
+    saved = { ...saved, backgroundColor: '#112233', cover: { kind: 'none' } };
+    await go('/org/firm');
+    assert.equal(await page.$eval('figure', node => getComputedStyle(node.parentElement).backgroundColor), 'rgb(17, 34, 51)', 'portrait-only covers retain the selected studio background behind its contrasting text');
+    saved = portraitAppearance;
     await page.setViewport({ width: 1280, height: 1000 }); await go('/org/firm');
     await button('Edit cover').click(); await page.waitForSelector('[role=dialog]'); await button('Original photo').click(); await button('Save cover').click();
     await page.waitForFunction(() => !document.querySelector('[role=dialog]')); assert.equal(saved.portrait.treatment, 'original');
