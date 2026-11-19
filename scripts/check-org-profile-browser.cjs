@@ -179,7 +179,7 @@ async function main() {
     assert.equal(signIn.searchParams.get('callbackUrl'), '/org/firm?tab=contact#profile-content');
     role = 'ADMIN'; saved = structuredClone(initial);
     await go('/org/firm'); await button('Edit cover').click(); await page.waitForSelector('[role=dialog]');
-    await page.click('button[aria-label="Next portrait suggestion"]');
+    await page.locator('button[aria-label="Next portrait suggestion"]').click();
     assert.ok(await page.$eval('[role=dialog]', node => node.textContent.includes('2 of 2')));
     await button('Use this photograph').click(); await page.waitForFunction(() => document.body.textContent.includes('Cutout ready.'));
     await page.$eval('input[placeholder="Names and roles"]', node => { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(node, 'Jane and Alex · Founders'); node.dispatchEvent(new Event('input', { bubbles: true })); });
