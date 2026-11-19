@@ -238,3 +238,19 @@ test('suggestions never invent lifetime totals and Folio count remains live', ()
   assert.equal(profilePageStyle('#ffffff')['--org-page-ink'], '#000000');
   assert.deepEqual(profilePageStyle(null), {});
 });
+
+test('portrait save requires same-studio assets and preserves the saved cover on rejection or removal', async () => {
+  const own = 'https://storage.test/storage/v1/object/public/user-avatars/org-profile/' + orgId + '/19c69c1b-940f-445b-bca4-f43a9e405a23.png';
+  const portrait = { originalUrl: own, cutoutUrl: own, treatment: 'cutout', caption: 'Studio founders', position: 45, scale: 95 };
+  const appearance = { ...defaultOrgAppearance(), introduction: 'Existing introduction', portrait };
+  assert.equal((await route.PATCH(request(appearance), context)).status, 200);
+  assert.deepEqual((await (await route.GET(get(), context)).json()).appearance, appearance);
+  for (const url of [own.replace(orgId, 'another-studio'), 'https://external.test/photo.png', own + '?private=true']) {
+    for (const key of ['originalUrl', 'cutoutUrl']) {
+      assert.equal((await route.PATCH(request({ ...appearance, portrait: { ...portrait, [key]: url } }), context)).status, 400);
+      assert.deepEqual(saved, appearance);
+    }
+  }
+  assert.equal((await route.PATCH(request({ ...appearance, portrait: null }), context)).status, 200);
+  assert.equal(saved.portrait, null); assert.equal(saved.introduction, 'Existing introduction');
+});

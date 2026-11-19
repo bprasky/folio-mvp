@@ -94,13 +94,15 @@ async function checkLabel(page,selector){
     for(const theme of ['light','dark'])for(const width of [390,1440]){
       await page.setViewport({width,height:1000});
       await page.goto(base+'/studio?theme='+theme,{waitUntil:'networkidle0'});
-      await page.waitForSelector('a[href="/onboarding/workspace?import=fixture"]');
-      assert.equal(await page.$eval('details', element=>element.open),false);
+      await page.waitForSelector('button::-p-text(Manage profile)');
+      assert.equal(await page.$('a[href="/onboarding/workspace?import=fixture"]'), null, 'private next step stays in its sheet');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
       await page.screenshot({path:path.join(out,'studio-'+theme+'-'+width+'.png'),fullPage:true});
       const next='a[href="/onboarding/workspace?import=fixture"]',team='[aria-label="Members to add to team"] button',complete='a[href="/profile"]';
-      const ratios=[await checkLabel(page,next),await checkLabel(page,'summary')];
-      await page.click('summary');
+      const ratios=[await checkLabel(page,'button::-p-text(Manage profile)')];
+      await click('Manage profile');
+      await page.waitForSelector(next, {visible:true});
+      ratios.push(await checkLabel(page,next));
       await page.waitForSelector('a[href="/org/studio/edit"]',{visible:true});
       for(const selector of [team,complete,'button[aria-label="Dismiss"]','a[href="/org/studio/edit"]'])ratios.push(await checkLabel(page,selector));
       await page.hover(team);ratios.push(await checkLabel(page,team));

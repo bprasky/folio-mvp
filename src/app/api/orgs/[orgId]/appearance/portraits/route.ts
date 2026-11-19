@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { rateLimit } from '@/lib/rateLimit';
-import { readImageBody } from '@/lib/server/project-image-input';
+import { ImageInputError, readImageBody } from '@/lib/server/project-image-input';
 import { cutoutPortrait, ownedProfileImage, portraitCandidates, PortraitError, preparePortraitPhoto,
   removePreparedPortraits, requirePortraitAdmin, storePortrait } from '@/lib/server/org-portrait';
 
@@ -19,7 +19,7 @@ const inputSchema = z.union([
 
 function failure(error: unknown) {
   return NextResponse.json({ error: error instanceof PortraitError ? error.message : 'Could not prepare this photograph. Try another photo or upload your own.' },
-    { status: error instanceof PortraitError ? error.status : error instanceof z.ZodError ? 400 : 500, headers });
+    { status: error instanceof PortraitError || error instanceof ImageInputError ? error.status : error instanceof z.ZodError ? 400 : 500, headers });
 }
 async function access(params: Context['params']) {
   const session = await getServerSession(authOptions);
