@@ -245,8 +245,10 @@ async function main() {
     await page.waitForSelector('[aria-label="Your private profile preview"]');
     assert.equal(await page.$eval('h1',e=>e.textContent),'Your work, already taking shape.');
     await go('/projects');await clickNavigate('Import');await page.waitForSelector('[aria-label="Your private profile preview"]');
+    await clickText('Review & publish','button');await page.waitForSelector('[role="dialog"]');
     await clickNavigate('Continue to Folio','button');assert.equal(new URL(page.url()).pathname,'/projects');
     await clickNavigate('Import');await page.waitForSelector('[aria-label="Your private profile preview"]');
+    await clickText('Review & publish','button');await page.waitForSelector('[role="dialog"]');
     await clickNavigate('Bring over more work from a website');await page.waitForSelector('input[placeholder="yourstudio.com"]');
     assert.equal(new URL(page.url()).searchParams.get('returnTo'),'/projects');
     results.push({journey:'Projects → Import → private preview → leave → resume → projects → import more',passed:true});
