@@ -173,6 +173,16 @@ test('an unknown restrictive dependency rolls back every deletion and workspace 
   } finally { await db.$executeRawUnsafe('DROP TABLE studio_delete_test_restrict'); }
 });
 
+test('simultaneous confirmations produce one deletion receipt and both callers can recover', async () => {
+  const { actor, org } = await fixture();
+  await f.project(actor.id, { designerOrgId: org.id });
+  const review = await reviewStudioDeletion(actor.id, org.id);
+  const results = await Promise.all([deleteStudio(actor.id, org.id, confirm(review)), deleteStudio(actor.id, org.id, confirm(review))]);
+  assert.ok(results.every(result => result.deleted));
+  assert.equal(results.filter(result => result.replayed).length, 1);
+  assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 1);
+});
+
 test('an import committed while deletion waits on the studio lock prevents deletion', async () => {
   const { actor, org } = await fixture();
   const review = await reviewStudioDeletion(actor.id, org.id);

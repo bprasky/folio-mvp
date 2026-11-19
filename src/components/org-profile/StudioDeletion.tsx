@@ -80,7 +80,7 @@ export default function StudioDeletion({ orgId }: { orgId: string }) {
             <p className={styles.copy}>This removes the studio profile, project pages, project interview records, publications, team memberships, invitations, and profile features. Members keep their personal accounts. Projects belonging to other studios remain.</p>
             <p className={styles.copy}>Previously shared image links, exports, and backups are not erased by this action.</p>
             {review.blockers.length > 0 ? <div className={styles.notice} role="alert"><strong>A few things need attention first</strong><ul>{review.blockers.map(message => <li key={message}>{message}</li>)}</ul></div> : <>
-              <label className={styles.label} htmlFor="studio-delete-name">Type <strong>{review.name}</strong> to confirm
+              <label className={styles.label} htmlFor="studio-delete-name"><span>Type <strong>{review.name}</strong> to confirm</span>
                 <input id="studio-delete-name" className={styles.input} autoComplete="off" spellCheck={false} value={confirmation} onChange={event => setConfirmation(event.target.value)} disabled={busy} />
               </label>
               <label className={styles.acknowledgment}><input type="checkbox" checked={acknowledged} onChange={event => setAcknowledged(event.target.checked)} disabled={busy} />

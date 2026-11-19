@@ -42,7 +42,9 @@ async function main() {
       const chunks = []; for await (const chunk of req) chunks.push(chunk);
       deletes.push(JSON.parse(Buffer.concat(chunks))); received?.();
       if (mode === 'error') return json(res, { error: 'The studio changed. Review deletion again.' }, 409);
-      if (mode === 'lost') { mode = 'success'; res.destroy(); return; }
+      // Truncated confirmation after commit, without Chromium silently retrying
+      // an idempotent DELETE when a socket closes before response headers.
+      if (mode === 'lost') { mode = 'success'; res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{'); return; }
       if (mode === 'hold') await new Promise(resolve => { release = resolve; });
       return json(res, { deleted: true, orgId: 'firm', replayed: deletes.length > 1 });
     }
