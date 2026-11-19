@@ -65,10 +65,11 @@ export async function POST(request: NextRequest, { params }: Context) {
     if (!file.size || file.size > MAX_BYTES) throw new UploadError('Choose an image smaller than 5 MB.', 413);
     const input = Buffer.from(await file.arrayBuffer());
     let prepared: Buffer;
-    const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    let mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
     try {
       const metadata = await sharp(input, { limitInputPixels: 40_000_000, animated: false }).metadata();
       if (!metadata.format || !['jpeg', 'png', 'webp'].includes(metadata.format)) throw new Error('Invalid format');
+      if (metadata.hasAlpha) mime = 'image/png';
       prepared = await stripExifMetadata(input, mime);
     } catch { throw new UploadError('This image could not be read. Choose a valid JPEG, PNG or WebP.', 400); }
     if (prepared.length > MAX_BYTES) throw new UploadError('This image is too large after processing. Choose a smaller image.', 413);

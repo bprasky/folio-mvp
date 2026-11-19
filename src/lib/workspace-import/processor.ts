@@ -47,6 +47,21 @@ async function readPage(url: string, kind: ImportPage['kind'], includeProjects: 
 }
 
 export function collectPage(run: WorkspaceImport, page: ImportPage, result: ReturnType<typeof extractWebsitePage>) {
+  if (run.sections.includes('business')) {
+    run.profile.portraitCandidates ||= [];
+    const candidates = page.kind === 'social' ? result.images.slice(0, 2).map(image => ({
+      url: image.url, sourceUrl: page.url, label: 'Instagram profile photograph',
+    })) : result.portraitCandidates;
+    for (const candidate of candidates || []) {
+      if (run.profile.portraitCandidates.length >= 8) break;
+      if (!run.profile.portraitCandidates.some(saved => saved.url === candidate.url))
+        run.profile.portraitCandidates.push({ ...candidate, id: requestIdentity('founder-portrait', [run.orgId, candidate.url]) });
+    }
+    if (page.kind !== 'social' && result.instagramUrl && !run.profile.instagramUrl) {
+      run.profile.instagramUrl = result.instagramUrl;
+      if (run.pages.length < IMPORT_LIMITS.pages) run.pages.push({ url: result.instagramUrl, kind: 'social', status: 'pending', attempts: 0 });
+    }
+  }
   const businessPage = page.kind === 'home' || page.kind === 'about';
   if (run.sections.includes('business') && businessPage) {
     if (!run.profile.description || page.kind === 'about') { run.profile.description = result.description; run.profile.sourceUrl = page.url; }
@@ -66,7 +81,7 @@ export function collectPage(run: WorkspaceImport, page: ImportPage, result: Retu
     else note(run, `We reached the ${IMPORT_LIMITS.projects}-project limit for this import. You can add any remaining projects in your workspace.`);
     if (result.imageCount > IMPORT_LIMITS.photos) note(run, `${result.title}: the first ${IMPORT_LIMITS.photos} photographs were selected. Add any remaining photographs in the project.`);
   }
-  if (page.kind !== 'project') for (const link of result.links) {
+  if (page.kind !== 'project' && page.kind !== 'social') for (const link of result.links) {
     if (run.pages.some(value => value.url === link.url)) continue;
     if ((link.kind === 'project' || link.kind === 'portfolio') && !run.sections.includes('projects')) continue;
     if (link.kind === 'about' && !run.sections.includes('business') && !run.sections.includes('bio')) continue;

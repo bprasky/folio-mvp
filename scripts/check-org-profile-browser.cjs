@@ -20,6 +20,7 @@ const source = `
 import React from 'react'; import {createRoot} from 'react-dom/client';
 import Settings from './src/app/org/[orgId]/settings/page';
 import Hero from './src/components/org-profile/OrgProfileHero';
+import CoverEditor from './src/components/org-profile/OrgCoverEditor';
 import Tabs from './src/components/org-profile/OrgProfileTabs';
 import Feed from './src/components/org-profile/OrgProfileFeed';
 import Contact from './src/components/org-profile/OrgContactTab';
@@ -29,7 +30,7 @@ const d=window.fixture;
 const tab=new URLSearchParams(location.search).get('tab')||'feed';
 const member=Boolean(d.role);
 function App(){return location.pathname.endsWith('/settings') ? <Settings/> : <div className={styles.page} style={profilePageStyle(d.appearance.backgroundColor)}>
-<Hero org={d.org} appearance={d.appearance} cover={resolveProfileCover(d.appearance,d.projects)} projectCount={d.projectCount} year={2026} isMember={member} isAdmin={d.role==='ADMIN'||d.role==='OWNER'}/>
+<Hero org={d.org} appearance={d.appearance} cover={resolveProfileCover(d.appearance,d.projects)} projectCount={d.projectCount} year={2026} isMember={member} isAdmin={d.role==='ADMIN'||d.role==='OWNER'} tools={d.role==='ADMIN'?<CoverEditor orgId="firm"/>:null}/>
 <div id="profile-content"><Tabs orgId="firm" activeTab={tab}/><div style={{padding:20}}>{tab==='contact' ? <Contact org={d.org} isMember={member} currentUser={member?{id:'member',name:'Member'}:null}/> : <Feed orgId="firm" initialFilter={new URLSearchParams(location.search).get('filter')||'all'} initialSort="featured" projectCount={4}/>}</div></div></div>}
 createRoot(document.getElementById('root')).render(<App/>);`;
 
@@ -52,7 +53,7 @@ async function build() {
   config.content = [path.join(root, 'src/components/org-profile/**/*.tsx'), path.join(root, 'src/components/feed/**/*.tsx'), path.join(root, 'src/app/org/**/*.tsx')];
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
   let headline, body;
-  for (const file of fs.readdirSync(path.join(root, '.next/static/css')).filter(file => file.endsWith('.css'))) {
+  for (const file of (process.env.ORG_PROFILE_TEST_SYSTEM_FONTS ? [] : fs.readdirSync(path.join(root, '.next/static/css'))).filter(file => file.endsWith('.css'))) {
     for (const face of fs.readFileSync(path.join(root, '.next/static/css', file), 'utf8').match(/@font-face\{[^}]+\}/g) || []) {
       if (!/Cormorant_Garamond|Instrument_Sans|__cormorant_|__instrumentSans_/.test(face)) continue;
       css += face; const family = face.match(/font-family:([^;]+)/)[1];
@@ -60,6 +61,7 @@ async function build() {
       if (/Instrument_Sans|__instrumentSans_/.test(face) && !/Fallback/.test(family)) body = family;
     }
   }
+  if (process.env.ORG_PROFILE_TEST_SYSTEM_FONTS) { headline = 'Georgia'; body = 'Arial'; }
   assert.ok(headline && body, 'Run typecheck:prepare to build actual Folio fonts first.');
   css += `:root{--font-headline:${headline};--font-body:${body}}body{font-family:var(--font-body)}`;
   fs.writeFileSync(path.join(out, 'globals.css'), css);
@@ -73,6 +75,14 @@ async function main() {
   const server = http.createServer(async (req, res) => {
     const pathname = new URL(req.url, 'http://fixture').pathname;
     if (pathname === '/api/orgs/firm/appearance/image') { for await (const chunk of req) {} return json(res, { url: 'https://storage.test/upload.png' }); }
+    if (pathname === '/api/orgs/firm/appearance/portraits') {
+      if (req.method === 'POST') {
+        const chunks = []; for await (const chunk of req) chunks.push(chunk);
+        const body = JSON.parse(Buffer.concat(chunks));
+        return json(res, body.cutout ? { cutoutUrl: 'https://storage.test/cutout.png' } : { originalUrl: 'https://storage.test/portrait.png' });
+      }
+      return json(res, { candidates: [1, 2].map(index => ({ id: `candidate-${index}`, importId: 'import', label: `Founder photograph ${index}`, sourceUrl: 'https://studio.test/about', previewUrl: '/photo.png' })) });
+    }
     if (pathname === '/api/orgs/firm/appearance') {
       if (req.method === 'PATCH') {
         const chunks = []; for await (const chunk of req) chunks.push(chunk);
@@ -141,7 +151,7 @@ async function main() {
     assert.equal(await page.$eval('#root > div', node => getComputedStyle(node).backgroundColor), 'rgb(17, 34, 51)');
     await page.screenshot({ path: path.join(out, 'profile-custom.png'), fullPage: true });
     await go('/org/firm/settings'); await page.waitForSelector('textarea');
-    const upload = (await page.$$('input[type=file]'))[1]; await upload.uploadFile(path.join(out, 'photo.png'));
+    const upload = (await page.$$('input[type=file]'))[2]; await upload.uploadFile(path.join(out, 'photo.png'));
     await page.waitForFunction(() => document.body.textContent.includes('Image ready.'));
     await button('Save appearance').click(); await page.waitForFunction(() => document.body.textContent.includes('Appearance saved.'));
     assert.equal(saved.identity.url, 'https://storage.test/upload.png');
@@ -157,7 +167,7 @@ async function main() {
       const tools = await page.$$eval('nav[aria-label="Manage profile"] a', links => links.map(link => link.getAttribute('href')));
       assert.deepEqual(tools, viewer === 'ADMIN' ? ['/org/firm/settings#appearance', '/org/firm/edit'] : []);
       assert.equal(await page.$('a[href="/org/firm/vendors"]'), null);
-      assert.equal(Boolean(await page.$('section a[href*="tab=contact"]')), !viewer);
+      assert.equal(Boolean(await page.$('section a[href*="tab=contact"]')), true, 'owners see the same public contact action');
     }
     await page.click('section a[href*="filter=projects"]');
     await page.waitForFunction(() => document.querySelector('button[aria-pressed="true"]')?.textContent === 'Projects');
@@ -166,6 +176,31 @@ async function main() {
     const signIn = new URL(await page.$eval('a[href*="callbackUrl="]', link => link.href));
     assert.equal(signIn.pathname, '/auth/signin');
     assert.equal(signIn.searchParams.get('callbackUrl'), '/org/firm?tab=contact#profile-content');
+    role = 'ADMIN'; saved = structuredClone(initial);
+    await go('/org/firm'); await button('Edit cover').click(); await page.waitForSelector('[role=dialog]');
+    await page.click('button[aria-label="Next portrait suggestion"]');
+    assert.ok(await page.$eval('[role=dialog]', node => node.textContent.includes('2 of 2')));
+    await button('Use this photograph').click(); await page.waitForFunction(() => document.body.textContent.includes('Cutout ready.'));
+    await page.$eval('input[placeholder="Names and roles"]', node => { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; setter.call(node, 'Jane and Alex · Founders'); node.dispatchEvent(new Event('input', { bubbles: true })); });
+    await button('Save cover').click(); await page.waitForFunction(() => !document.querySelector('[role=dialog]'));
+    assert.equal(saved.portrait.treatment, 'cutout'); assert.equal(saved.portrait.caption, 'Jane and Alex · Founders');
+    for (const width of [1440, 390, 320]) for (const theme of ['light', 'dark']) {
+      await page.setViewport({ width, height: 1000 }); await go('/org/firm');
+      await page.evaluate(theme => document.documentElement.classList.toggle('dark', theme === 'dark'), theme);
+      await page.waitForSelector('figure');
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `portrait overflow ${width}/${theme}`);
+      const bounds = await page.evaluate(() => { const a = document.querySelector('h1').getBoundingClientRect(), b = document.querySelector('figure').getBoundingClientRect(); return { titleRight: a.right, titleTop: a.top, portraitLeft: b.left, portraitBottom: b.bottom }; });
+      assert.ok(width > 700 ? bounds.titleRight <= bounds.portraitLeft : bounds.titleTop >= bounds.portraitBottom, `portrait overlaps title at ${width}`);
+      await page.screenshot({ path: path.join(out, `portrait-${width}-${theme}.png`), fullPage: true });
+    }
+    await page.setViewport({ width: 1280, height: 1000 }); await go('/org/firm');
+    await button('Edit cover').click(); await page.waitForSelector('[role=dialog]'); await button('Original photo').click(); await button('Save cover').click();
+    await page.waitForFunction(() => !document.querySelector('[role=dialog]')); assert.equal(saved.portrait.treatment, 'original');
+    await go('/org/firm'); await button('Edit cover').click(); await page.waitForSelector('[role=dialog]');
+    await button('Remove portrait').click(); await button('Cancel').click();
+    assert.equal(saved.portrait.treatment, 'original', 'cancel preserves the saved portrait');
+    await button('Edit cover').click(); await page.waitForSelector('[role=dialog]'); await button('Remove portrait').click(); await button('Save cover').click();
+    await page.waitForFunction(() => !document.querySelector('[role=dialog]')); assert.equal(saved.portrait, null);
     assert.deepEqual(errors, []);
     console.log('PASS: actual settings/public components at 1440/768/390/320; save/reload, failure retry, crop/photo selection, color contrast/reset, upload, facts/order/empty, actual tabs/mosaic, and lower-role/guest settings denial.');
     console.log(`Screenshots: ${out}`);

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SafeImage from '@/components/SafeImage';
 import OrgProfileHero from './OrgProfileHero';
+import PortraitControls from './PortraitControls';
 import {
   PROFILE_FACTS, factSuggestion, profileFacts, profileIntroduction, profilePageStyle, resolveProfileCover,
   type OrgAppearanceData, type OrgProfileAppearance, type ProfileFact, type ProfileFactKey,
@@ -18,6 +19,7 @@ export default function OrgAppearanceSettings({ orgId }: { orgId: string }) {
   const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [portraitBusy, setPortraitBusy] = useState(false);
   const [uploading, setUploading] = useState<'cover' | 'identity' | null>(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -90,7 +92,7 @@ export default function OrgAppearanceSettings({ orgId }: { orgId: string }) {
   const facts = draft.facts ?? profileFacts(draft, data.org, data.projectCount, year);
   const cover = resolveProfileCover(draft, data.projects);
   const dirty = JSON.stringify(draft) !== JSON.stringify(data.appearance);
-  const busy = saving || uploading !== null;
+  const busy = saving || uploading !== null || portraitBusy;
   const moveFact = (index: number, direction: number) => {
     const updated = [...facts];
     [updated[index], updated[index + direction]] = [updated[index + direction], updated[index]];
@@ -109,6 +111,7 @@ export default function OrgAppearanceSettings({ orgId }: { orgId: string }) {
     <fieldset disabled={busy}>
       <div className={styles.editorGrid}>
         <div className={styles.controls}>
+          <PortraitControls orgId={orgId} portrait={draft.portrait} onChange={portrait => change({ portrait })} onBusy={setPortraitBusy} />
           <div>
             <h3>Page color</h3>
             <div className={styles.inlineControls}>

@@ -28,11 +28,12 @@ export const structured=renderToStaticMarkup(<ProjectStructuredData project={{id
 assert.ok(result.mixed.indexOf('href="/project/first-house"') >= 0);
 assert.ok(result.mixed.indexOf('href="/project/first-house"') < result.mixed.indexOf('href="https://press.example/story"'));
 assert.ok(result.mixed.indexOf('href="https://press.example/story"') < result.mixed.indexOf('href="/project/second-house"'));
-assert.match(result.setup,/Your next step/);
-assert.match(result.setup,/href="\/onboarding\/workspace\?import=saved"/);
-assert.match(result.setup,/<details[^>]*><summary>Manage profile<\/summary>[\s\S]*Find &amp; manage coverage[\s\S]*Team notices<\/details>/);
+assert.match(result.setup,/Manage profile/);
+assert.match(result.setup,/Edit cover/);
+assert.doesNotMatch(result.setup,/Your next step|Team notices|Find &amp; manage coverage/, 'private tools do not append content to the public profile');
 assert.doesNotMatch(result.complete,/Your next step/);
-assert.doesNotMatch(result.contributor,/Manage profile|Edit profile|Team notices/);
+assert.match(result.contributor,/Manage profile/);
+assert.doesNotMatch(result.contributor,/Edit cover|Edit profile|Team notices/);
 for (const key of ['ownerAbout','publicAbout']) {
   assert.match(result[key], /Saved studio biography/);
   assert.doesNotMatch(result[key], /No team members|Profile Completeness|Start Bio Interview/);

@@ -49,7 +49,7 @@ export function extractWebsitePage(html: string, url: string, personName = '') {
     const label = clean($(anchor).text() || $(anchor).find('img').attr('alt') || '').slice(0, 160);
     let kind: ImportPage['kind'] | undefined;
     if (personName && label.toLowerCase().includes(personName.toLowerCase())) kind = 'bio';
-    else if (/\/(?:about|studio|our-story|about-us|team)(?:\/|$)/i.test(pathname)) kind = 'about';
+    else if (/\/(?:about|studio|our-story|about-us|team|people|founders|leadership)(?:\/|$)/i.test(pathname)) kind = 'about';
     else if (portfolio.test(pathname)) {
       const parts = pathname.split('/').filter(Boolean);
       kind = parts.length > 1 && !/^(residential|commercial|all|selected-work)$/i.test(parts[parts.length - 1]) ? 'project' : 'portfolio';
@@ -73,6 +73,20 @@ export function extractWebsitePage(html: string, url: string, personName = '') {
     addImage($(image).attr('data-src') || $(image).attr('src'), $(image).attr('alt'));
   });
   if (!images.length) addImage($('meta[property="og:image"]').attr('content'));
+  // Suggestions require team-page or textual portrait context. Never infer names from faces.
+  const teamPage = /\/(?:about|studio|our-story|about-us|team|people|founders|leadership)(?:\/|$)/i.test(new URL(url).pathname);
+  const portraitWords = /\b(founder|co-founder|portrait|headshot|principal|our team|meet the team)\b/i;
+  const portraitCandidates = images.filter(image => portraitWords.test(image.alt) ||
+    (teamPage && !/\b(kitchen|bedroom|bathroom|living room|dining room|project|interior|exterior)\b/i.test(image.alt)))
+    .slice(0, 8).map(image => ({ url: image.url, sourceUrl: url,
+      label: image.alt && !/^(image|photo|img)[\s\d-]*$/i.test(image.alt) ? image.alt.slice(0, 160) : 'Studio photograph' }));
+  const instagramLinks = $('a[href]').toArray().flatMap(anchor => {
+    const href = resolve($(anchor).attr('href'), url);
+    if (!href) return [];
+    const target = new URL(href);
+    return /^(www\.)?instagram\.com$/i.test(target.hostname) && /^\/[\w.-]+\/?$/.test(target.pathname) &&
+      !/^\/(accounts|explore|reels|direct)\/?$/.test(target.pathname) ? [target.origin + target.pathname] : [];
+  });
   $('script,style,nav,header,footer,form,[role="navigation"]').remove();
   const paragraphs = $('main p, article p').toArray().map(element => clean($(element).text())).filter(text => text.length >= 40);
   const text = (paragraphs.length ? paragraphs : $('p').toArray().map(element => clean($(element).text())).filter(text => text.length >= 40)).slice(0, 16).join('\n\n').slice(0, 6000);
@@ -83,5 +97,6 @@ export function extractWebsitePage(html: string, url: string, personName = '') {
     foundedYear: founded >= 1800 && founded <= new Date().getFullYear() ? founded : undefined,
     personalBio: person && typeof person.description === 'string' ? clean(person.description).slice(0, 4000) :
       personName && title.toLowerCase().includes(personName.toLowerCase()) ? text : undefined,
-    links, images: images.slice(0, IMPORT_LIMITS.photos), imageCount: images.length };
+    links, portraitCandidates, instagramUrl: instagramLinks[0],
+    images: images.slice(0, IMPORT_LIMITS.photos), imageCount: images.length };
 }

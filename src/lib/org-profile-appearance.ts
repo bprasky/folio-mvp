@@ -36,6 +36,11 @@ export const orgProfileAppearanceSchema = z.object({
   ]),
   coverPosition: z.object({ x: z.number().int().min(0).max(100), y: z.number().int().min(0).max(100) }).strict(),
   identity: z.object({ mode: z.enum(['logo', 'portrait', 'initials']), url: imageUrl.nullable() }).strict(),
+  portrait: z.object({
+    originalUrl: imageUrl, cutoutUrl: imageUrl.nullable(), treatment: z.enum(['original', 'cutout']),
+    caption: z.string().trim().max(160), position: z.number().int().min(0).max(100),
+    scale: z.number().int().min(70).max(120),
+  }).strict().refine(value => value.treatment !== 'cutout' || !!value.cutoutUrl, 'Prepare the cutout first.').nullable().optional(),
   facts: z.array(z.object({ key: factKey, value: z.string().trim().max(48) }).strict()).max(4)
     .refine(facts => new Set(facts.map(fact => fact.key)).size === facts.length, 'Choose each fact only once.').nullable(),
 }).strict();

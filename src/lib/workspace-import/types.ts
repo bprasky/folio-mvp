@@ -4,7 +4,7 @@ export const WORKSPACE_IMPORT_KIND = 'workspace-import-v1';
 export const IMPORT_LIMITS = { pages: 18, projects: 10, photos: 30 } as const;
 export type ImportSection = 'business' | 'bio' | 'projects';
 export type ImportPage = {
-  url: string; kind: 'home' | 'about' | 'portfolio' | 'bio' | 'project';
+  url: string; kind: 'home' | 'about' | 'portfolio' | 'bio' | 'project' | 'social';
   status: 'pending' | 'saved' | 'failed'; attempts: number; error?: string;
 };
 export type ImportedProject = {
@@ -19,6 +19,8 @@ export type WorkspacePreviewProject = {
   photos: Array<{ url: string; alt: string; width?: number; height?: number }>;
 };
 export type ProfileDraft = {
+  portraitCandidates?: Array<{ id: string; url: string; sourceUrl: string; label: string }>;
+  instagramUrl?: string;
   description: string; location: string; website: string; foundedYear?: number;
   logo?: string; logoSource?: string;
   sourceUrl?: string; bioSourceUrl?: string; bio?: string;
