@@ -38,6 +38,7 @@ export type OrgCapability =
   | 'remove_members'
   | 'review_join_requests'
   | 'delete_projects'
+  | 'delete_studio'
   | 'publish_projects'
   | 'invite_members'
   | 'add_to_team_page'
@@ -55,6 +56,7 @@ export const CAPABILITY_ORDER: OrgCapability[] = [
   'remove_members',
   'review_join_requests',
   'delete_projects',
+  'delete_studio',
   'publish_projects',
   'invite_members',
   'add_to_team_page',
@@ -72,6 +74,7 @@ export const CAPABILITY_LABEL: Record<OrgCapability, string> = {
   remove_members: 'Remove members',
   review_join_requests: 'Approve / decline join requests',
   delete_projects: 'Delete projects',
+  delete_studio: 'Delete studio (after review)',
   publish_projects: 'Publish projects',
   invite_members: 'Invite members',
   add_to_team_page: 'Add members to public team page',
@@ -91,6 +94,7 @@ const ROLE_CAPABILITIES: Record<OrgRole, ReadonlySet<OrgCapability>> = {
     'remove_members',
     'review_join_requests',
     'delete_projects',
+    'delete_studio',
     'publish_projects',
     'invite_members',
     'add_to_team_page',
@@ -104,6 +108,7 @@ const ROLE_CAPABILITIES: Record<OrgRole, ReadonlySet<OrgCapability>> = {
     'remove_members',
     'review_join_requests',
     'delete_projects',
+    'delete_studio',
     'publish_projects',
     'invite_members',
     'add_to_team_page',

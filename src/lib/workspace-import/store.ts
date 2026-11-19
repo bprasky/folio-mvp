@@ -57,6 +57,9 @@ export async function createWorkspaceImport(userId: string, input: {
   await prisma.$transaction(async tx => {
     // Serialize each actor's starts: retries replay the same row and concurrent tabs share the quota.
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(73195, hashtext(${userId}))`;
+    // Import sessions store the organization in JSON rather than an FK. Take
+    // the equivalent parent lock so studio deletion cannot race this start.
+    await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${input.orgId} FOR KEY SHARE`;
     await assertImportSections(userId, input, tx);
     const existing = await tx.importSession.findUnique({ where: { id } });
     if (existing) {
