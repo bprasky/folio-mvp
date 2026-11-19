@@ -194,6 +194,11 @@ async function main() {
       assert.ok(width > 700 ? bounds.titleRight <= bounds.portraitLeft : bounds.titleTop >= bounds.portraitBottom, `portrait overlaps title at ${width}`);
       await page.screenshot({ path: path.join(out, `portrait-${width}-${theme}.png`), fullPage: true });
     }
+    const portraitAppearance = structuredClone(saved);
+    saved = { ...saved, backgroundColor: '#112233', cover: { kind: 'none' } };
+    await go('/org/firm');
+    assert.equal(await page.$eval('figure', node => getComputedStyle(node.parentElement).backgroundColor), 'rgb(17, 34, 51)', 'portrait-only covers retain the selected studio background behind its contrasting text');
+    saved = portraitAppearance;
     await page.setViewport({ width: 1280, height: 1000 }); await go('/org/firm');
     await button('Edit cover').click(); await page.waitForSelector('[role=dialog]'); await button('Original photo').click(); await button('Save cover').click();
     await page.waitForFunction(() => !document.querySelector('[role=dialog]')); assert.equal(saved.portrait.treatment, 'original');

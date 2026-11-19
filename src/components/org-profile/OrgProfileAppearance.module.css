@@ -180,7 +180,7 @@
 .originalPortrait { height: clamp(340px, 35cqi, 540px); margin-bottom: 56px; border-radius: 8px; background: rgba(15,15,14,.25); }
 .originalPortrait > img { object-position: var(--portrait-position, 50%) center; transform-origin: var(--portrait-position, 50%) center; }
 .originalPortrait figcaption { bottom: 12px; }
-.withPortrait .withoutPhoto { background: var(--surface-elevated); }
+.withPortrait .withoutPhoto { background: var(--org-page-background, var(--surface-elevated)); }
 .withPortrait .withoutPhoto::after { background: none; }
 .withPortrait .withoutPhoto .glass { color: var(--org-page-ink, var(--folio-text-primary)); }
 .withPortrait .withoutPhoto .introduction, .withPortrait .withoutPhoto .eyebrow, .withPortrait .withoutPhoto .fact dt { color: var(--org-page-muted, var(--folio-text-secondary)); }
