@@ -80,6 +80,7 @@ async function main() {
   const globals = fs.readFileSync(path.join(root, 'src/app/globals.css'), 'utf8').replace(/@import\s+"([^"]+)";/g, (_, file) => file.startsWith('../styles/') ? fs.readFileSync(path.resolve(root, 'src/app', file), 'utf8') : '');
   const config = require(path.join(root, 'tailwind.config.js'));
   config.content = [path.join(root, 'src/components/marketing/WelcomeModal.tsx'),path.join(root, 'src/components/navigation/**/*.tsx'),path.join(root,'src/app/about/**/*.tsx'),path.join(root,'src/app/auth/**/*.tsx'),path.join(root,'src/app/projects/**/*.tsx'),path.join(root,'src/app/onboarding/**/*.tsx'),path.join(root,'src/components/projects/**/*.tsx'),path.join(root,'src/components/onboarding/**/*.tsx'),path.join(root,'src/components/org-profile/**/*.tsx'),path.join(root,'src/components/feed/**/*.tsx')];
+  config.content.push(path.join(root, 'src/components/ui/dialog.tsx'));
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
   css += `
     @font-face{font-family:FolioFixtureHeadline;src:url(/CormorantGaramond.ttf) format('truetype');font-style:normal;font-weight:300 700;font-display:swap}
@@ -245,8 +246,11 @@ async function main() {
     await page.waitForSelector('[aria-label="Your private profile preview"]');
     assert.equal(await page.$eval('h1',e=>e.textContent),'Your work, already taking shape.');
     await go('/projects');await clickNavigate('Import');await page.waitForSelector('[aria-label="Your private profile preview"]');
+    assert.equal(await page.$('[role=dialog]'),null,'Import preview starts with the public composition');
+    await clickText('Review & publish','button');await page.waitForSelector('[role=dialog]');
     await clickNavigate('Continue to Folio','button');assert.equal(new URL(page.url()).pathname,'/projects');
     await clickNavigate('Import');await page.waitForSelector('[aria-label="Your private profile preview"]');
+    await clickText('Review & publish','button');await page.waitForSelector('[role=dialog]');
     await clickNavigate('Bring over more work from a website');await page.waitForSelector('input[placeholder="yourstudio.com"]');
     assert.equal(new URL(page.url()).searchParams.get('returnTo'),'/projects');
     results.push({journey:'Projects → Import → private preview → leave → resume → projects → import more',passed:true});
