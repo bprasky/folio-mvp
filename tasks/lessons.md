@@ -1344,3 +1344,7 @@ The founder rejected a rigid, boxed form mockup as resembling old Windows. Use F
 The founder wants a large curated room-name catalog precisely because room sorting is autocomplete, not a dropdown. Include specialist residential, landscape, hospitality and commercial spaces; show only a few matching names while typing. Custom names remain unrestricted and only an explicit save adds them to that account's private future options. Never crowdsource user names into the shared catalog.
 
 - Production migration connection failures need credential-safe error codes. On 2026-11-17, DIRECT_URL returned Prisma P1000 while the already configured application credentials passed on the approved Supabase session pooler (5432). Use the validated application connection in session mode for the scoped release; never migrate through transaction pooling (6543).
+
+## 2026-11-20 - Test the entry that the product advertises
+
+The Settings hub promised account deletion under Privacy while the new studio-deletion feature only lived inside organization settings. Verify the original navigation through the named studio and review dialog, not only the destination component. Use Folio's editorial type, open canvas and theme tokens in settings; remove unsupported feature promises. A browser session with a different account or organization role does not explain a failure reported by the user as a studio owner. Preserve the user's stated context and identify the actual UI mismatch.

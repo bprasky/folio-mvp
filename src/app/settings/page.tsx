@@ -280,7 +280,7 @@ export default function SettingsHubPage() {
               href="/settings/privacy"
               icon={<Shield className="w-4 h-4" />}
               title="Privacy"
-              sub="Data export, account deletion."
+              sub="Vendor visibility, studio deletion, and personal data."
             />
           </ul>
         </Section>

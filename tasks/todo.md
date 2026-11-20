@@ -1688,3 +1688,15 @@ Plan: `docs/MEDIA_DISCOVERY_AND_SEARCH.md`. Isolated source snapshot of main ed5
 
 
 Media discovery checkpoint: bulk imported-photo approval and per-project partial-result recovery implemented. Background media sweep suggests project links for owner confirmation; checked interview consent reads accessible text during approval. Coverage security, import publication, portfolio, workspace, guided interview, live adapter, profile publication, public-channel and organization tests pass. Actual server-rendered profile feed anchors and disclosures pass. Browser UI bundle passes; interactive review and full hosted compile remain pending. Local Windows build fails creating .next output directories (EPERM); do not merge/deploy on this local result. No migrations or production data writes.
+
+## 2026-11-20 - Privacy must expose the deletion it advertises
+
+- [x] Reproduce Privacy and the Settings link on production; verify current main matches the deployed deletion release.
+- [x] Add the existing studio-deletion review directly to Privacy, with named studio selection and membership-specific access guidance.
+- [x] Replace the legacy raised card with theme-aware editorial surfaces, visible switches, pill actions, and an honest personal-data contact path.
+- [x] Verify Settings-to-Privacy owner/admin review, other roles, multiple studios, independent fetch failures, and vendor confirmation in light/dark at mobile/desktop sizes.
+- [ ] Run required checks and publish a scoped fix for review.
+
+No deletion backend, membership permissions, production data, or schema changes. The local baseline e6ff3251 has the exact source tree of current main c45d0eeb; GitHub is accessed through the connector because this checkout has no configured remote.
+
+Review: The actual Settings hub, Privacy page and shared deletion dialog pass isolated browser checks at 1280/390/320 in light/dark using production typefaces. Covers owner/admin entry, restricted roles, studio selection and correct review target, independent fetch failures/retry, no memberships, vendor opt-in/cancel/save recovery, and existing destructive-confirmation guards. Scoped ESLint, client imports and migration discipline pass. TypeScript has no new diagnostics (842 current against the existing 843 baseline). Local production compile encounters Windows EPERM creating .next/server/app/admin; hosted compile remains required before release. No actual studio deletion or vendor-visibility change was performed on production.
