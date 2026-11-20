@@ -12,14 +12,20 @@ type Context = { params: { orgId: string } | Promise<{ orgId: string }> };
 const headers = { 'Cache-Control': 'private, no-store' };
 const inputSchema = z.object({ confirmation: z.string().min(1).max(500), version: z.string().regex(/^[a-f0-9]{64}$/), acknowledged: z.literal(true) }).strict();
 
-function failure(error: unknown) {
+function failure(error: unknown, operation: 'review' | 'delete') {
   if (error instanceof StudioDeletionError || error instanceof SpotlightConflict)
     return NextResponse.json({ error: error.message }, { status: error.status, headers });
   const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
   if (code === 'P2034' || code === 'P2002') return NextResponse.json({ error: 'The studio changed during this request. Retry, or review deletion again.' }, { status: 409, headers });
   if (code === 'P2003') return NextResponse.json({ error: 'This studio has connected records that need Folio review before deletion. Nothing was deleted.' }, { status: 409, headers });
-  console.error('[Studio deletion] Request failed', { code });
-  return NextResponse.json({ error: 'We could not confirm deletion. Retry this request to check its result safely.' }, { status: 500, headers });
+  const meta = error && typeof error === 'object' && 'meta' in error && error.meta && typeof error.meta === 'object'
+    ? error.meta as Record<string, unknown> : undefined;
+  // Log schema identifiers, never the confirmation body or raw database errors.
+  console.error('[Studio deletion] Request failed', { operation, code, model: meta?.modelName, table: meta?.table, column: meta?.column });
+  const message = operation === 'review'
+    ? 'We could not load the deletion review. Nothing was deleted. Please try again.'
+    : 'We could not confirm deletion. Retry this request to check its result safely.';
+  return NextResponse.json({ error: message }, { status: 500, headers });
 }
 
 export async function GET(_request: NextRequest, { params }: Context) {
@@ -28,7 +34,7 @@ export async function GET(_request: NextRequest, { params }: Context) {
     if (!session?.user?.id) return NextResponse.json({ error: 'Sign in to manage this studio.' }, { status: 401, headers });
     const { orgId } = await params;
     return NextResponse.json(await reviewStudioDeletion(session.user.id, orgId), { headers });
-  } catch (error) { return failure(error); }
+  } catch (error) { return failure(error, 'review'); }
 }
 
 export async function DELETE(request: NextRequest, { params }: Context) {
@@ -55,5 +61,5 @@ export async function DELETE(request: NextRequest, { params }: Context) {
       for (const path of ['/', '/projects', '/directory', '/settings', `/org/${orgId}`, ...result.paths]) revalidatePath(path);
     } catch { console.error('[Studio deletion] Cache refresh needed', { orgId }); }
     return NextResponse.json({ deleted: true, orgId, replayed: result.replayed }, { headers });
-  } catch (error) { return failure(error); }
+  } catch (error) { return failure(error, 'delete'); }
 }

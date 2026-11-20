@@ -43,12 +43,19 @@ async function inspect(db: Database, userId: string, orgId: string) {
   const projects = await db.project.findMany({ where: { designerOrgId: orgId }, orderBy: { id: 'asc' },
     select: { id: true, updatedAt: true, isPublic: true, publishedAt: true, portfolioPublishedAt: true, post: { select: { slug: true } } } });
   const projectIds = projects.map(project => project.id);
+  // Commerce has not been provisioned in every environment. Check its catalog
+  // entry before querying: catching P2021 inside a PostgreSQL transaction leaves
+  // that transaction aborted. Only an absent orders table means no orders;
+  // permissions, missing columns and other query failures must still stop deletion.
+  const [commerce] = await db.$queryRaw<{ orders: boolean }[]>`
+    SELECT to_regclass('public.orders') IS NOT NULL AS orders`;
+  const ordersAvailable = commerce.orders;
   const [imports, scheduled, externalSpotlights, stories, orders, subscriptions, boosts, photoBoosts, reelBoosts, developments, claims, collaborations, live] = await Promise.all([
     db.importSession.findMany({ where: { OR: [importsFor(orgId), { projectId: { in: projectIds } }] }, select: { id: true, status: true, updatedAt: true }, orderBy: { id: 'asc' } }),
     db.spotlightQuestion.count({ where: { spotlight: { projectId: { in: projectIds } } } }),
     db.productSpotlight.count({ where: { publisherOrgId: orgId, projectId: { notIn: projectIds } } }),
     db.editorialStory.count({ where: { OR: [{ organizationId: orgId }, { revisions: { some: { sources: { some: { projectPost: { projectId: { in: projectIds } } } } } } }] } }),
-    db.order.count({ where: { OR: [{ vendorOrgId: orgId }, { projectId: { in: projectIds } }] } }),
+    ordersAvailable ? db.order.count({ where: { OR: [{ vendorOrgId: orgId }, { projectId: { in: projectIds } }] } }) : 0,
     db.vendorSubscription.count({ where: { organizationId: orgId, stripeSubscriptionId: { not: null } } }),
     db.boost.count({ where: { OR: [{ vendorId: orgId }, { opportunity: { projectId: { in: projectIds } } }] } }),
     db.inContextBoost.count({ where: { OR: [{ vendorId: orgId }, { productTag: { image: { projectId: { in: projectIds } } } }, { projectPost: { projectId: { in: projectIds } } }] } }),
@@ -69,7 +76,7 @@ async function inspect(db: Database, userId: string, orgId: string) {
   if (developments || claims || collaborations) blockers.push('This studio has shared developments, product claims or collaboration stories. Contact Folio to resolve them before deletion.');
   const counts = { projects: projects.length, publishedProjects: projects.filter(p => p.isPublic || p.publishedAt || p.portfolioPublishedAt).length,
     members: org.users.length, profileItems: org._count.orgMedia + org._count.orgRecognition + org._count.orgCollaborations };
-  const version = createHash('sha256').update(JSON.stringify({ org, projects, imports, blockers })).digest('hex');
+  const version = createHash('sha256').update(JSON.stringify({ org, projects, imports, blockers, ordersAvailable })).digest('hex');
   const review: StudioDeletionReview = { id: org.id, name: org.name, version, counts, blockers };
   return { review, projects, imports };
 }

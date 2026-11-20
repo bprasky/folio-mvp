@@ -101,6 +101,61 @@ test('running imports and protected billing records block deletion, with useful 
   assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
 });
 
+test('unprovisioned commerce does not abort review or deletion; receipt retries still work', async () => {
+  const { actor, org } = await fixture('OWNER');
+  const project = await f.project(actor.id, { designerOrgId: org.id });
+  await db.$executeRawUnsafe('ALTER TABLE public.orders RENAME TO studio_delete_test_orders');
+  try {
+    const review = await expect(await route.GET(get(org.id), context(org.id)), 200);
+    assert.deepEqual(review.blockers, []);
+    const deleted = await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
+    assert.equal(deleted.deleted, true);
+    assert.equal(await db.organization.findUnique({ where: { id: org.id } }), null);
+    assert.equal(await db.project.findUnique({ where: { id: project.id } }), null);
+    assert.ok(await db.user.findUnique({ where: { id: actor.id } }));
+    const replay = await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
+    assert.equal(replay.replayed, true);
+    assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 1);
+  } finally { await db.$executeRawUnsafe('ALTER TABLE public.studio_delete_test_orders RENAME TO orders'); }
+});
+
+test('commerce becoming available invalidates the review; existing studio and project orders remain protected', async () => {
+  const { actor, org } = await fixture('OWNER');
+  const project = await f.project(actor.id, { designerOrgId: org.id });
+  let review;
+  await db.$executeRawUnsafe('ALTER TABLE public.orders RENAME TO studio_delete_test_orders');
+  try { review = await expect(await route.GET(get(org.id), context(org.id)), 200); }
+  finally { await db.$executeRawUnsafe('ALTER TABLE public.studio_delete_test_orders RENAME TO orders'); }
+  await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
+  for (const relation of [{ vendorOrgId: org.id }, { projectId: project.id }]) {
+    const order = await db.order.create({ data: { purchaserUserId: actor.id, ...relation,
+      retailAmountCents: 100, tradeAmountCents: 80, marginAmountCents: 20,
+      folioAmountCents: 20, cashPaidCents: 100, fulfillmentMethod: 'QUOTE' } });
+    try {
+      review = await expect(await route.GET(get(org.id), context(org.id)), 200);
+      assert.match(review.blockers.join(' '), /Billing, order/);
+      await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
+      assert.ok(await db.order.findUnique({ where: { id: order.id } }));
+      assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
+      assert.ok(await db.project.findUnique({ where: { id: project.id } }));
+    } finally { await db.order.delete({ where: { id: order.id } }); }
+  }
+});
+
+test('an incompatible orders table fails closed and a review error never implies deletion was attempted', async () => {
+  const { actor, org } = await fixture('OWNER');
+  const review = await reviewStudioDeletion(actor.id, org.id);
+  await db.$executeRawUnsafe('ALTER TABLE public.orders RENAME COLUMN "vendorOrgId" TO "studioDeleteTestVendorId"');
+  try {
+    const failed = await expect(await route.GET(get(org.id), context(org.id)), 500);
+    assert.match(failed.error, /could not load the deletion review\. Nothing was deleted/);
+    assert.doesNotMatch(failed.error, /confirm deletion|check its result/);
+    await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 500);
+    assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
+    assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 0);
+  } finally { await db.$executeRawUnsafe('ALTER TABLE public.orders RENAME COLUMN "studioDeleteTestVendorId" TO "vendorOrgId"'); }
+});
+
 test('both owner and admin can delete; all personal accounts, personal projects and credited external projects survive', async () => {
   for (const role of ['OWNER', 'ADMIN']) {
     const { actor, org } = await fixture(role);
