@@ -1348,3 +1348,7 @@ The founder wants a large curated room-name catalog precisely because room sorti
 ## 2026-11-20 - Test the entry that the product advertises
 
 The Settings hub promised account deletion under Privacy while the new studio-deletion feature only lived inside organization settings. Verify the original navigation through the named studio and review dialog, not only the destination component. Use Folio's editorial type, open canvas and theme tokens in settings; remove unsupported feature promises. A browser session with a different account or organization role does not explain a failure reported by the user as a studio owner. Preserve the user's stated context and identify the actual UI mismatch.
+
+## 2026-11-20 - Test deletion against deployed optional schema
+
+A fresh Prisma schema hid that commerce orders are not provisioned in production. Destructive workflows must check a known optional table's catalog entry before querying it; catching a missing-table exception inside a PostgreSQL transaction cannot recover the aborted transaction. Only confirmed absence permits skipping that table, while malformed tables and all other errors must stop deletion. Test both schema states with real PostgreSQL, retain financial blockers, and distinguish failed read-only review from uncertain post-confirmation results in user copy. Verify the deployed review path before calling the feature ready.

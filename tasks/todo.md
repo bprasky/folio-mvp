@@ -1700,3 +1700,13 @@ Media discovery checkpoint: bulk imported-photo approval and per-project partial
 No deletion backend, membership permissions, production data, or schema changes. The local baseline e6ff3251 has the exact source tree of current main c45d0eeb; GitHub is accessed through the connector because this checkout has no configured remote.
 
 Review: The actual Settings hub, Privacy page and shared deletion dialog pass isolated browser checks at 1280/390/320 in light/dark using production typefaces. Covers owner/admin entry, restricted roles, studio selection and correct review target, independent fetch failures/retry, no memberships, vendor opt-in/cancel/save recovery, and existing destructive-confirmation guards. Scoped ESLint, client imports and migration discipline pass. TypeScript has no new diagnostics (842 current against the existing 843 baseline). Local production compile encounters Windows EPERM creating .next/server/app/admin; hosted compile remains required before release. No actual studio deletion or vendor-visibility change was performed on production.
+
+## 2026-11-20 - Deletion review against unprovisioned commerce
+
+- [x] Trace the actual IG Workshop production request and confirm its failure occurs in GET review, before deletion.
+- [x] Keep order protection when present; detect the absent commerce table before the transaction can be aborted.
+- [x] Separate read-only review errors from uncertain deletion results; include bounded schema context in server diagnostics.
+- [ ] Verify absent-table deletion/replay, commerce activation, existing-order protection and fail-closed schema errors in real PostgreSQL.
+- [ ] Run required checks, merge the tested fix and verify production review without deleting a real studio.
+
+Evidence: production dpl_2x7nKLc7cW9AXg96xf9EmFZdDnvZ, GET requests at 21:12 and 21:24 UTC, Prisma P2021 for public.orders. These requests never execute DELETE. Local baseline tree 1485bd8c matches current main 8b4cd4ef. No schema migration or production data write is part of this fix.
