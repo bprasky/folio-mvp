@@ -86,7 +86,12 @@ async function main() {
     const open = async () => { await button('Review studio deletion').click(); await page.waitForSelector('#studio-delete-name'); };
     const enterName = value => page.$eval('#studio-delete-name', (node, value) => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(node, value); node.dispatchEvent(new Event('input', { bubbles: true })); }, value);
     const fill = async () => { await enterName(org.name); await page.click('[role=dialog] input[type=checkbox]'); await page.waitForFunction(() => [...document.querySelectorAll('[role=dialog] button')].some(b => b.textContent === 'Permanently delete studio' && !b.disabled)); };
-    const close = async () => { await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]', { hidden: true }); };
+    const close = async () => {
+      // Wait for the dialog's focus scope before sending a keyboard event. An
+      // attached portal is not yet interactive while Radix mounts its effects.
+      await page.waitForFunction(() => document.querySelector('[role=dialog]')?.contains(document.activeElement));
+      await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]', { hidden: true });
+    };
     for (const denied of ['MANAGER', 'MEMBER', 'VIEWER']) {
       role = denied; await go(); assert.equal(await page.$('#studio-deletion-title'), null, `${denied} must not see deletion controls`);
     }
