@@ -87,9 +87,13 @@ async function main() {
     const enterName = value => page.$eval('#studio-delete-name', (node, value) => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(node, value); node.dispatchEvent(new Event('input', { bubbles: true })); }, value);
     const fill = async () => { await enterName(org.name); await page.click('[role=dialog] input[type=checkbox]'); await page.waitForFunction(() => [...document.querySelectorAll('[role=dialog] button')].some(b => b.textContent === 'Permanently delete studio' && !b.disabled)); };
     const close = async () => {
-      // Wait for the dialog's focus scope before sending a keyboard event. An
-      // attached portal is not yet interactive while Radix mounts its effects.
-      await page.waitForFunction(() => document.querySelector('[role=dialog]')?.contains(document.activeElement));
+      // Focus can arrive before Radix registers its dismissable layer. Its
+      // explicit pointer-events restoration marks the interactive modal layer;
+      // wait for both before testing Escape (including the vendor dialog).
+      await page.waitForFunction(() => {
+        const dialog = document.querySelector('[role=dialog]');
+        return dialog?.contains(document.activeElement) && dialog.style.pointerEvents === 'auto';
+      });
       await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]', { hidden: true });
     };
     for (const denied of ['MANAGER', 'MEMBER', 'VIEWER']) {

@@ -1710,3 +1710,5 @@ Review: The actual Settings hub, Privacy page and shared deletion dialog pass is
 - [ ] Run required checks, merge the tested fix and verify production review without deleting a real studio.
 
 Evidence: production dpl_2x7nKLc7cW9AXg96xf9EmFZdDnvZ, GET requests at 21:12 and 21:24 UTC, Prisma P2021 for public.orders. These requests never execute DELETE. Local baseline tree 1485bd8c matches current main 8b4cd4ef. No schema migration or production data write is part of this fix.
+
+Validation checkpoint: all 13 real PostgreSQL deletion tests pass, including the three new production-schema regressions. Local scoped ESLint, migration/client guards and TypeScript ratchet pass (842 current / 843 existing baseline). The unchanged browser suite passed locally but exposed an Escape-before-layer-registration race on CI; the harness now waits for the dialog's interactive pointer-event state as well as focus, retaining the keyboard dismissal assertion. Final hosted browser/build checks are required before release; local Next compilation still encounters the existing Windows EPERM output-directory issue.
