@@ -89,15 +89,18 @@ async function inspect(db: Database, userId: string, orgId: string) {
     ] } }),
   ]);
   const blockers: string[] = [];
-  if (imports.some(run => run.status === 'PROCESSING')) blockers.push('A website or project import is still running. Wait for it to finish, then review deletion again.');
   if (live) blockers.push('An interview is still open or finishing. End it before deleting the studio.');
   if (scheduled || externalSpotlights) blockers.push('This studio has protected Spotlight records. Contact Folio to arrange their removal before deleting the studio.');
   if (stories) blockers.push('Publishing Studio stories use this studio or its projects. Contact Folio to review these stories before deletion.');
   if (orders || subscriptions || boosts || photoBoosts || reelBoosts) blockers.push('Billing, order or promotion records need to be resolved with Folio before this studio can be deleted.');
   if (developments || claims || collaborations) blockers.push('This studio has shared developments, product claims or collaboration stories. Contact Folio to resolve them before deletion.');
   const counts = { projects: projects.length, publishedProjects: projects.filter(p => p.isPublic || p.publishedAt || p.portfolioPublishedAt).length,
-    members: org.users.length, profileItems: org._count.orgMedia + org._count.orgRecognition + org._count.orgCollaborations };
-  const version = createHash('sha256').update(JSON.stringify({ org, projects, imports, blockers, tables })).digest('hex');
+    members: org.users.length, profileItems: org._count.orgMedia + org._count.orgRecognition + org._count.orgCollaborations,
+    activeImports: imports.filter(run => run.status === 'PROCESSING').length };
+  // Confirmation covers the entire studio, including work arriving from imports.
+  // Bind it to the studio/access and protected dependencies, not moving progress
+  // or project counts. Deletion locks the studio and rechecks every blocker below.
+  const version = createHash('sha256').update(JSON.stringify({ org, blockers, tables })).digest('hex');
   const review: StudioDeletionReview = { id: org.id, name: org.name, version, counts, blockers };
   return { review, projects, imports, tables };
 }
@@ -151,9 +154,16 @@ export async function deleteStudio(userId: string, orgId: string, input: StudioD
       throw new StudioDeletionError('The studio changed while deletion was being confirmed. Review it again.');
     const ids = current.projects.map(project => project.id);
 
-    // Non-FK import/candidate state must not resurrect deleted work. Other
-    // studios' imports, personal bios, users and projects are never selected.
-    await tx.importSession.deleteMany({ where: { id: { in: current.imports.map(run => run.id) } } });
+    // Removing the durable run cancels queued/leased imports: worker checkpoints
+    // use update/CAS, never upsert. A worker already fetching cannot recreate the
+    // studio/projects after commit (membership checks and parent FKs reject it).
+    // Keep cancellation in this transaction so any deletion failure restores it.
+    const importIds = current.imports.map(run => run.id);
+    await tx.importSession.deleteMany({ where: { id: { in: importIds } } });
+    if (importIds.length) await tx.notification.deleteMany({ where: {
+      type: 'WORKSPACE_IMPORT_READY', OR: importIds.map(id => ({ metadata: { path: ['importId'], equals: id } })),
+    } });
+    // Other studios' imports, personal bios, users and projects are never selected.
     await tx.studioCandidate.deleteMany({ where: { organizationId: orgId } });
     await tx.profileFieldSource.deleteMany({ where: { organizationId: orgId } });
     if (current.tables.territories)
