@@ -101,11 +101,26 @@ test('running imports and protected billing records block deletion, with useful 
   assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
 });
 
-test('unprovisioned commerce does not abort review or deletion; receipt retries still work', async () => {
+// Hide feature tables without dropping their data or FK constraints. Every test
+// restores the catalog even if an assertion fails; this database is disposable.
+async function withoutTables(tables, run) {
+  const hidden = [];
+  try {
+    for (const table of tables) {
+      await db.$executeRawUnsafe(`ALTER TABLE public.${table} RENAME TO studio_delete_test_${table}`);
+      hidden.push(table);
+    }
+    return await run();
+  } finally {
+    for (const table of hidden.reverse())
+      await db.$executeRawUnsafe(`ALTER TABLE public.studio_delete_test_${table} RENAME TO ${table}`);
+  }
+}
+
+test('unprovisioned subscriptions do not abort review or deletion; receipt retries still work', async () => {
   const { actor, org } = await fixture('OWNER');
   const project = await f.project(actor.id, { designerOrgId: org.id });
-  await db.$executeRawUnsafe('ALTER TABLE public.orders RENAME TO studio_delete_test_orders');
-  try {
+  await withoutTables(['vendor_subscriptions'], async () => {
     const review = await expect(await route.GET(get(org.id), context(org.id)), 200);
     assert.deepEqual(review.blockers, []);
     const deleted = await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
@@ -116,7 +131,76 @@ test('unprovisioned commerce does not abort review or deletion; receipt retries 
     const replay = await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
     assert.equal(replay.replayed, true);
     assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 1);
-  } finally { await db.$executeRawUnsafe('ALTER TABLE public.studio_delete_test_orders RENAME TO orders'); }
+  });
+});
+
+const optionalFeatureTables = [
+  ['orders'], ['vendor_subscriptions'], ['boosts'], ['boosts', 'boost_opportunities'],
+  ['in_context_boosts'], ['homepage_reel_boosts'], ['developments'],
+  ['vendor_product_claims'], ['collaboration_stories'], ['org_territory_assignments'],
+];
+
+test('optional features can be absent separately or together through review and confirmed deletion', async t => {
+  for (const tables of [...optionalFeatureTables, [...new Set(optionalFeatureTables.flat())]]) {
+    await t.test(tables.join(', '), async () => {
+      const { actor, org } = await fixture();
+      const project = await f.project(actor.id, { designerOrgId: org.id });
+      await withoutTables(tables, async () => {
+        const review = await expect(await route.GET(get(org.id), context(org.id)), 200);
+        assert.deepEqual(review.blockers, []);
+        await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
+        assert.equal(await db.organization.findUnique({ where: { id: org.id } }), null);
+        assert.equal(await db.project.findUnique({ where: { id: project.id } }), null);
+        assert.ok(await db.user.findUnique({ where: { id: actor.id } }));
+      });
+    });
+  }
+});
+
+test('provisioning any optional feature after review requires a fresh confirmation', async t => {
+  for (const tables of optionalFeatureTables) {
+    await t.test(tables.join(', '), async () => {
+      const { org } = await fixture();
+      const review = await withoutTables(tables, () => reviewStudioDeletion(session.user.id, org.id));
+      await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
+      assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
+    });
+  }
+});
+
+test('absent optional tables do not disable billing protection in tables that exist', async () => {
+  const { actor, org } = await fixture();
+  const subscription = await db.vendorSubscription.create({ data: { organizationId: org.id, stripeSubscriptionId: `fixture-${org.id}` } });
+  await withoutTables(['orders', 'collaboration_stories', 'developments'], async () => {
+    const review = await reviewStudioDeletion(actor.id, org.id);
+    assert.match(review.blockers.join(' '), /Billing/);
+    await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
+    assert.ok(await db.vendorSubscription.findUnique({ where: { id: subscription.id } }));
+  });
+  const order = await db.order.create({ data: { purchaserUserId: actor.id, vendorOrgId: org.id,
+    retailAmountCents: 100, tradeAmountCents: 80, marginAmountCents: 20,
+    folioAmountCents: 20, cashPaidCents: 100, fulfillmentMethod: 'QUOTE' } });
+  await withoutTables(['vendor_subscriptions'], async () => {
+    const review = await reviewStudioDeletion(actor.id, org.id);
+    assert.match(review.blockers.join(' '), /Billing/);
+    await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
+    assert.ok(await db.order.findUnique({ where: { id: order.id } }));
+  });
+  assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
+});
+
+test('partially provisioned promotions and missing core tables still prevent deletion', async () => {
+  const { actor, org } = await fixture();
+  await f.project(actor.id, { designerOrgId: org.id });
+  const review = await reviewStudioDeletion(actor.id, org.id);
+  for (const table of ['boost_opportunities', 'editorial_stories']) {
+    await withoutTables([table], async () => {
+      await expect(await route.GET(get(org.id), context(org.id)), 500);
+      await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 500);
+      assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
+      assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 0);
+    });
+  }
 });
 
 test('commerce becoming available invalidates the review; existing studio and project orders remain protected', async () => {
@@ -154,6 +238,20 @@ test('an incompatible orders table fails closed and a review error never implies
     assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
     assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 0);
   } finally { await db.$executeRawUnsafe('ALTER TABLE public.orders RENAME COLUMN "studioDeleteTestVendorId" TO "vendorOrgId"'); }
+});
+
+test('an incompatible subscriptions table cannot be treated as an absent optional feature', async () => {
+  const { actor, org } = await fixture();
+  const review = await reviewStudioDeletion(actor.id, org.id);
+  await db.$executeRawUnsafe('ALTER TABLE public.vendor_subscriptions RENAME COLUMN "stripeSubscriptionId" TO "studioDeleteTestSubscriptionId"');
+  try {
+    await expect(await route.GET(get(org.id), context(org.id)), 500);
+    await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 500);
+    assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
+    assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 0);
+  } finally {
+    await db.$executeRawUnsafe('ALTER TABLE public.vendor_subscriptions RENAME COLUMN "studioDeleteTestSubscriptionId" TO "stripeSubscriptionId"');
+  }
 });
 
 test('both owner and admin can delete; all personal accounts, personal projects and credited external projects survive', async () => {

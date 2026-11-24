@@ -9,6 +9,18 @@ import { assertNoScheduledHistory } from '@/lib/spotlight/deletion';
 import { WORKSPACE_IMPORT_KIND } from '@/lib/workspace-import/types';
 
 type Database = Prisma.TransactionClient;
+type OptionalStudioTables = {
+  orders: boolean;
+  subscriptions: boolean;
+  boosts: boolean;
+  opportunities: boolean;
+  photoBoosts: boolean;
+  reelBoosts: boolean;
+  developments: boolean;
+  claims: boolean;
+  collaborations: boolean;
+  territories: boolean;
+};
 export class StudioDeletionError extends Error {
   constructor(message: string, readonly status = 409) { super(message); }
 }
@@ -43,26 +55,35 @@ async function inspect(db: Database, userId: string, orgId: string) {
   const projects = await db.project.findMany({ where: { designerOrgId: orgId }, orderBy: { id: 'asc' },
     select: { id: true, updatedAt: true, isPublic: true, publishedAt: true, portfolioPublishedAt: true, post: { select: { slug: true } } } });
   const projectIds = projects.map(project => project.id);
-  // Commerce has not been provisioned in every environment. Check its catalog
-  // entry before querying: catching P2021 inside a PostgreSQL transaction leaves
-  // that transaction aborted. Only an absent orders table means no orders;
-  // permissions, missing columns and other query failures must still stop deletion.
-  const [commerce] = await db.$queryRaw<{ orders: boolean }[]>`
-    SELECT to_regclass('public.orders') IS NOT NULL AS orders`;
-  const ordersAvailable = commerce.orders;
+  // These optional commerce/partner features are not provisioned everywhere.
+  // Inspect the catalog first: catching P2021 after querying a missing table
+  // leaves the PostgreSQL transaction aborted. Only absence means no records;
+  // missing columns, permissions and failures in present tables still stop us.
+  // Core studio, project, import, editorial and Spotlight tables remain required.
+  const [tables] = await db.$queryRaw<OptionalStudioTables[]>`
+    SELECT to_regclass('public.orders') IS NOT NULL AS orders,
+      to_regclass('public.vendor_subscriptions') IS NOT NULL AS subscriptions,
+      to_regclass('public.boosts') IS NOT NULL AS boosts,
+      to_regclass('public.boost_opportunities') IS NOT NULL AS opportunities,
+      to_regclass('public.in_context_boosts') IS NOT NULL AS "photoBoosts",
+      to_regclass('public.homepage_reel_boosts') IS NOT NULL AS "reelBoosts",
+      to_regclass('public.developments') IS NOT NULL AS developments,
+      to_regclass('public.vendor_product_claims') IS NOT NULL AS claims,
+      to_regclass('public.collaboration_stories') IS NOT NULL AS collaborations,
+      to_regclass('public.org_territory_assignments') IS NOT NULL AS territories`;
   const [imports, scheduled, externalSpotlights, stories, orders, subscriptions, boosts, photoBoosts, reelBoosts, developments, claims, collaborations, live] = await Promise.all([
     db.importSession.findMany({ where: { OR: [importsFor(orgId), { projectId: { in: projectIds } }] }, select: { id: true, status: true, updatedAt: true }, orderBy: { id: 'asc' } }),
     db.spotlightQuestion.count({ where: { spotlight: { projectId: { in: projectIds } } } }),
     db.productSpotlight.count({ where: { publisherOrgId: orgId, projectId: { notIn: projectIds } } }),
     db.editorialStory.count({ where: { OR: [{ organizationId: orgId }, { revisions: { some: { sources: { some: { projectPost: { projectId: { in: projectIds } } } } } } }] } }),
-    ordersAvailable ? db.order.count({ where: { OR: [{ vendorOrgId: orgId }, { projectId: { in: projectIds } }] } }) : 0,
-    db.vendorSubscription.count({ where: { organizationId: orgId, stripeSubscriptionId: { not: null } } }),
-    db.boost.count({ where: { OR: [{ vendorId: orgId }, { opportunity: { projectId: { in: projectIds } } }] } }),
-    db.inContextBoost.count({ where: { OR: [{ vendorId: orgId }, { productTag: { image: { projectId: { in: projectIds } } } }, { projectPost: { projectId: { in: projectIds } } }] } }),
-    db.homepageReelBoost.count({ where: { OR: [{ vendorId: orgId }, { projectPost: { projectId: { in: projectIds } } }] } }),
-    db.development.count({ where: { developerOrgId: orgId } }),
-    db.vendorProductClaim.count({ where: { organizationId: orgId } }),
-    db.collaborationStory.count({ where: { OR: [{ vendorOrgId: orgId }, { taggedProjectId: { in: projectIds } }] } }),
+    tables.orders ? db.order.count({ where: { OR: [{ vendorOrgId: orgId }, { projectId: { in: projectIds } }] } }) : 0,
+    tables.subscriptions ? db.vendorSubscription.count({ where: { organizationId: orgId, stripeSubscriptionId: { not: null } } }) : 0,
+    tables.boosts ? db.boost.count({ where: { OR: [{ vendorId: orgId }, { opportunity: { projectId: { in: projectIds } } }] } }) : 0,
+    tables.photoBoosts ? db.inContextBoost.count({ where: { OR: [{ vendorId: orgId }, { productTag: { image: { projectId: { in: projectIds } } } }, { projectPost: { projectId: { in: projectIds } } }] } }) : 0,
+    tables.reelBoosts ? db.homepageReelBoost.count({ where: { OR: [{ vendorId: orgId }, { projectPost: { projectId: { in: projectIds } } }] } }) : 0,
+    tables.developments ? db.development.count({ where: { developerOrgId: orgId } }) : 0,
+    tables.claims ? db.vendorProductClaim.count({ where: { organizationId: orgId } }) : 0,
+    tables.collaborations ? db.collaborationStory.count({ where: { OR: [{ vendorOrgId: orgId }, { taggedProjectId: { in: projectIds } }] } }) : 0,
     db.liveInterviewSession.count({ where: { status: { not: 'ended' }, OR: [
       { sourceId: orgId }, { sourceType: { in: ['project', 'project_guide'] }, sourceId: { in: projectIds } },
     ] } }),
@@ -76,9 +97,9 @@ async function inspect(db: Database, userId: string, orgId: string) {
   if (developments || claims || collaborations) blockers.push('This studio has shared developments, product claims or collaboration stories. Contact Folio to resolve them before deletion.');
   const counts = { projects: projects.length, publishedProjects: projects.filter(p => p.isPublic || p.publishedAt || p.portfolioPublishedAt).length,
     members: org.users.length, profileItems: org._count.orgMedia + org._count.orgRecognition + org._count.orgCollaborations };
-  const version = createHash('sha256').update(JSON.stringify({ org, projects, imports, blockers, ordersAvailable })).digest('hex');
+  const version = createHash('sha256').update(JSON.stringify({ org, projects, imports, blockers, tables })).digest('hex');
   const review: StudioDeletionReview = { id: org.id, name: org.name, version, counts, blockers };
-  return { review, projects, imports };
+  return { review, projects, imports, tables };
 }
 
 export async function reviewStudioDeletion(userId: string, orgId: string) {
@@ -120,9 +141,11 @@ export async function deleteStudio(userId: string, orgId: string, input: StudioD
       await tx.$queryRaw(Prisma.sql`SELECT id FROM project_posts WHERE "projectId" IN (${Prisma.join(projectIds)}) ORDER BY id FOR UPDATE`);
       await tx.$queryRaw(Prisma.sql`SELECT id FROM project_images WHERE "projectId" IN (${Prisma.join(projectIds)}) ORDER BY id FOR UPDATE`);
       await tx.$queryRaw(Prisma.sql`SELECT tag.id FROM product_tags AS tag JOIN project_images AS image ON image.id = tag."imageId" WHERE image."projectId" IN (${Prisma.join(projectIds)}) ORDER BY tag.id FOR UPDATE OF tag`);
-      await tx.$queryRaw(Prisma.sql`SELECT id FROM boost_opportunities WHERE "projectId" IN (${Prisma.join(projectIds)}) ORDER BY id FOR UPDATE`);
+      if (before.tables.opportunities)
+        await tx.$queryRaw(Prisma.sql`SELECT id FROM boost_opportunities WHERE "projectId" IN (${Prisma.join(projectIds)}) ORDER BY id FOR UPDATE`);
     }
-    await tx.$queryRaw`SELECT id FROM boost_opportunities WHERE "vendorId" = ${orgId} ORDER BY id FOR UPDATE`;
+    if (before.tables.opportunities)
+      await tx.$queryRaw`SELECT id FROM boost_opportunities WHERE "vendorId" = ${orgId} ORDER BY id FOR UPDATE`;
     const current = await inspect(tx, userId, orgId);
     if (current.review.version !== input.version || current.review.blockers.length)
       throw new StudioDeletionError('The studio changed while deletion was being confirmed. Review it again.');
@@ -133,8 +156,10 @@ export async function deleteStudio(userId: string, orgId: string, input: StudioD
     await tx.importSession.deleteMany({ where: { id: { in: current.imports.map(run => run.id) } } });
     await tx.studioCandidate.deleteMany({ where: { organizationId: orgId } });
     await tx.profileFieldSource.deleteMany({ where: { organizationId: orgId } });
-    await tx.orgTerritoryAssignment.deleteMany({ where: { OR: [{ vendorOrgId: orgId }, { designerOrgId: orgId }] } });
-    await tx.boostOpportunity.deleteMany({ where: { vendorId: orgId } });
+    if (current.tables.territories)
+      await tx.orgTerritoryAssignment.deleteMany({ where: { OR: [{ vendorOrgId: orgId }, { designerOrgId: orgId }] } });
+    if (current.tables.opportunities)
+      await tx.boostOpportunity.deleteMany({ where: { vendorId: orgId } });
     await tx.user.updateMany({ where: { operatingAsOrgId: orgId }, data: { operatingAsOrgId: null } });
     await tx.project.deleteMany({ where: { id: { in: ids }, designerOrgId: orgId } });
     // Database cascades remove studio membership, invitations, profile content
