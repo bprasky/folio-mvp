@@ -77,7 +77,9 @@ export default function StudioDeletion({ orgId }: { orgId: string }) {
               <div><dt>Memberships removed</dt><dd>{review.counts.members}</dd></div>
               <div><dt>Profile features</dt><dd>{review.counts.profileItems}</dd></div>
             </dl>
+            {review.counts.activeImports > 0 && <p className={styles.notice} role="status">{review.counts.activeImports === 1 ? 'An import is still running.' : `${review.counts.activeImports} imports are still running.`} You can stop {review.counts.activeImports === 1 ? 'it' : 'them'} and delete this studio now.</p>}
             <p className={styles.copy}>This removes the studio profile, project pages, project interview records, publications, team memberships, invitations, and profile features. Members keep their personal accounts. Projects belonging to other studios remain.</p>
+            <p className={styles.copy}>Any running website or project imports will stop when you confirm. All of this studio’s projects are deleted, including drafts added after this review.</p>
             <p className={styles.copy}>Previously shared image links, exports, and backups are not erased by this action.</p>
             {review.blockers.length > 0 ? <div className={styles.notice} role="alert"><strong>A few things need attention first</strong><ul>{review.blockers.map(message => <li key={message}>{message}</li>)}</ul></div> : <>
               <label className={styles.label} htmlFor="studio-delete-name"><span>Type <strong>{review.name}</strong> to confirm</span>
@@ -92,7 +94,7 @@ export default function StudioDeletion({ orgId }: { orgId: string }) {
           {busy && <p role="status">Deleting studio…</p>}
           <div className={styles.actions}>
             {!loading && (!review || error || review.blockers.length > 0) && <button type="button" onClick={() => void loadReview()} disabled={busy} className={`${styles.button} ${controls.secondary}`}>Review again</button>}
-            {review && !review.blockers.length && <button type="button" onClick={() => void remove()} disabled={busy || confirmation !== review.name || !acknowledged} className={`${styles.button} ${controls.primary}`}>{busy ? 'Deleting…' : error ? 'Retry deletion' : 'Permanently delete studio'}</button>}
+            {review && !review.blockers.length && <button type="button" onClick={() => void remove()} disabled={busy || confirmation !== review.name || !acknowledged} className={`${styles.button} ${controls.primary}`}>{busy ? 'Deleting…' : error ? 'Retry deletion' : review.counts.activeImports > 0 ? 'Stop imports and delete studio' : 'Permanently delete studio'}</button>}
           </div>
         </div>
       </DialogContent>

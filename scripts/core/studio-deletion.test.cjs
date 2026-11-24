@@ -25,6 +25,13 @@ const route = require(resolve('src/app/api/orgs/[orgId]/deletion/route.ts'));
 const { deleteStudio, reviewStudioDeletion } = require(resolve('src/lib/server/studio-deletion.ts'));
 const { WORKSPACE_IMPORT_KIND } = require(resolve('src/lib/workspace-import/types.ts'));
 const { can } = require(resolve('src/lib/orgPermissions.ts'));
+const { saveImport } = require(resolve('src/lib/workspace-import/store.ts'));
+const { createProjectOnce } = require(resolve('src/lib/projects/createProject.ts'));
+let fetchImportPhoto, importUploads = 0;
+replace('src/lib/server/project-image-input.ts', { fetchProjectImage: (...args) => fetchImportPhoto(...args) });
+replace('src/lib/storage.ts', { saveBufferToProjectStorage: async () => { importUploads++; throw Error('Unexpected upload after cancellation'); } });
+replace('src/lib/email/sendEmail.ts', { sendEmail: async () => { throw Error('Unexpected import email'); } });
+const { advanceImport } = require(resolve('src/lib/workspace-import/processor.ts'));
 const context = id => ({ params: { orgId: id } });
 const get = id => new NextRequest(`https://folio.test/api/orgs/${id}/deletion`);
 const del = (id, body, headers = {}) => new NextRequest(`https://folio.test/api/orgs/${id}/deletion`, {
@@ -77,28 +84,86 @@ test('review is private, requires claimed studio; origin, name, acknowledgment a
   await expect(await route.DELETE(del(org.id, good, { 'sec-fetch-site': 'cross-site' }), context(org.id)), 403);
   await expect(await route.DELETE(del(org.id, good, { 'content-type': 'text/plain' }), context(org.id)), 400);
   await expect(await route.DELETE(del(org.id, { ...good, confirmation: 'x'.repeat(5000) }), context(org.id)), 413);
-  const newProject = await f.project(actor.id, { designerOrgId: org.id });
-  await expect(await route.DELETE(del(org.id, good), context(org.id)), 409);
-  assert.ok(await db.project.findUnique({ where: { id: newProject.id } }));
+  await db.organization.update({ where: { id: org.id }, data: { name: 'Renamed studio' } });
+  await expect(await route.DELETE(del(org.id, { ...good, confirmation: 'Renamed studio' }), context(org.id)), 409);
+  assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
   await db.organization.update({ where: { id: org.id }, data: { status: 'UNCLAIMED' } });
   await expect(await route.GET(get(org.id), context(org.id)), 403);
   await db.organization.update({ where: { id: org.id }, data: { status: 'CLAIMED', type: 'VENDOR' } });
   await expect(await route.GET(get(org.id), context(org.id)), 400);
 });
 
-test('running imports and protected billing records block deletion, with useful reasons', async () => {
+test('running imports can be cancelled by deletion while billing records remain protected', async () => {
   const { actor, org } = await fixture();
   const run = await db.importSession.create({ data: { userId: actor.id, sourceType: 'WEBSITE', status: 'PROCESSING',
     processingMeta: { kind: WORKSPACE_IMPORT_KIND, orgId: org.id } } });
   let review = await reviewStudioDeletion(actor.id, org.id);
-  assert.match(review.blockers.join(' '), /import is still running/);
-  await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
-  await db.importSession.update({ where: { id: run.id }, data: { status: 'COMPLETED' } });
+  assert.deepEqual(review.blockers, []);
+  assert.equal(review.counts.activeImports, 1);
   await db.vendorSubscription.create({ data: { organizationId: org.id, stripeSubscriptionId: `fixture-${org.id}` } });
   review = await reviewStudioDeletion(actor.id, org.id);
   assert.match(review.blockers.join(' '), /Billing/);
   await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
   assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
+  assert.equal((await db.importSession.findUnique({ where: { id: run.id } })).status, 'PROCESSING');
+});
+
+test('confirmation stops imports and removes drafts added since review, without affecting another studio', async () => {
+  const { actor, org } = await fixture();
+  const other = await f.organization();
+  const otherRun = await db.importSession.create({ data: { userId: actor.id, sourceType: 'WEBSITE', status: 'PROCESSING',
+    processingMeta: { kind: WORKSPACE_IMPORT_KIND, orgId: other.id } } });
+  const run = await db.importSession.create({ data: { userId: actor.id, sourceType: 'WEBSITE', status: 'PROCESSING',
+    processingMeta: { kind: WORKSPACE_IMPORT_KIND, orgId: org.id, phase: 'projects' } } });
+  const readyNotice = await db.notification.create({ data: { userId: actor.id, type: 'WORKSPACE_IMPORT_READY', title: 'Ready', body: 'Fixture',
+    metadata: { importId: run.id, orgId: org.id } } });
+  const otherNotice = await db.notification.create({ data: { userId: actor.id, type: 'WORKSPACE_IMPORT_READY', title: 'Other studio ready', body: 'Fixture',
+    metadata: { importId: otherRun.id, orgId: other.id } } });
+  const review = await reviewStudioDeletion(actor.id, org.id);
+  const project = await f.project(actor.id, { designerOrgId: org.id });
+  const projectRun = await db.importSession.create({ data: { userId: actor.id, projectId: project.id, sourceType: 'WEBSITE', status: 'PROCESSING' } });
+  await db.importSession.update({ where: { id: run.id }, data: { processingMeta: { kind: WORKSPACE_IMPORT_KIND, orgId: org.id, phase: 'notify' } } });
+  const fresh = await reviewStudioDeletion(actor.id, org.id);
+  assert.equal(fresh.version, review.version, 'background progress must not force endless review retries');
+  assert.equal(fresh.counts.activeImports, 2);
+  await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
+  for (const id of [run.id, projectRun.id]) assert.equal(await db.importSession.findUnique({ where: { id } }), null);
+  assert.equal(await db.project.findUnique({ where: { id: project.id } }), null);
+  assert.equal(await db.notification.findUnique({ where: { id: readyNotice.id } }), null);
+  assert.ok(await db.importSession.findUnique({ where: { id: otherRun.id } }));
+  assert.ok(await db.notification.findUnique({ where: { id: otherNotice.id } }));
+  assert.ok(await db.user.findUnique({ where: { id: actor.id } }));
+  await assert.rejects(createProjectOnce(actor.id, org.id, 'late-import', { title: 'Late draft', projectStatus: 'new_project' }), { code: 'P2003' });
+  const replay = await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
+  assert.equal(replay.replayed, true);
+});
+
+test('a leased worker finishing a photo fetch after deletion stops without saving or resurrecting its run', async () => {
+  const { actor, org } = await fixture();
+  const project = await f.project(actor.id, { designerOrgId: org.id });
+  const run = { kind: WORKSPACE_IMPORT_KIND, orgId: org.id, orgName: org.name, sections: ['projects'], phase: 'projects',
+    pages: [], profile: {}, notices: [], notification: { status: 'pending', attempts: 0 },
+    lease: { token: 'in-flight', until: new Date(Date.now() + 360000).toISOString() },
+    projects: [{ url: 'https://studio.test/project', title: 'Draft', projectId: project.id, status: 'photos', attempts: 0,
+      photos: [{ url: 'https://studio.test/photo.png', alt: 'Photo', status: 'pending', attempts: 0 }] }] };
+  const row = await db.importSession.create({ data: { userId: actor.id, sourceType: 'WEBSITE', status: 'PROCESSING', processingMeta: run } });
+  let started, release;
+  const entered = new Promise(resolve => { started = resolve; }), gate = new Promise(resolve => { release = resolve; });
+  fetchImportPhoto = async () => { started(); await gate; return { buffer: Buffer.from('fixture'), mime: 'image/png' }; };
+  importUploads = 0;
+  const worker = advanceImport(actor.id, row.id, structuredClone(run));
+  const stopped = assert.rejects(worker, /Active business access/);
+  await entered;
+  try {
+    const review = await reviewStudioDeletion(actor.id, org.id);
+    await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
+  } finally { release(); }
+  await stopped;
+  await assert.rejects(saveImport(row.id, row.processingMeta, run), /import changed/);
+  assert.equal(importUploads, 0);
+  assert.equal(await db.importSession.findUnique({ where: { id: row.id } }), null);
+  assert.equal(await db.project.findUnique({ where: { id: project.id } }), null);
+  assert.equal(await db.projectImage.count({ where: { projectId: project.id } }), 0);
 });
 
 // Hide feature tables without dropping their data or FK constraints. Every test
@@ -271,7 +336,7 @@ test('both owner and admin can delete; all personal accounts, personal projects 
     const retainedRun = await db.importSession.create({ data: { userId: actor.id, sourceType: 'WEBSITE', status: 'COMPLETED', processingMeta: { kind: WORKSPACE_IMPORT_KIND, orgId: otherOrg.id } } });
     await db.studioCandidate.create({ data: { id: `fixture-${org.id}`, designerId: actor.id, organizationId: org.id, projectIds: [owned.id], currentVersion: 1, state: 'draft' } });
     const review = await reviewStudioDeletion(actor.id, org.id);
-    assert.deepEqual(review.counts, { projects: 1, publishedProjects: 1, members: 2, profileItems: 0 });
+    assert.deepEqual(review.counts, { projects: 1, publishedProjects: 1, members: 2, profileItems: 0, activeImports: 0 });
     assert.deepEqual(review.blockers, []);
     failCache = true; // A post-commit cache error must not report a failed delete.
     const deleted = await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 200);
@@ -311,7 +376,8 @@ test('scheduled Spotlight history, Publishing Studio stories and active intervie
 test('an unknown restrictive dependency rolls back every deletion and workspace change', async () => {
   const { actor, org } = await fixture();
   const project = await f.project(actor.id, { designerOrgId: org.id });
-  const run = await db.importSession.create({ data: { userId: actor.id, sourceType: 'WEBSITE', status: 'COMPLETED', processingMeta: { kind: WORKSPACE_IMPORT_KIND, orgId: org.id } } });
+  const run = await db.importSession.create({ data: { userId: actor.id, sourceType: 'WEBSITE', status: 'PROCESSING', processingMeta: { kind: WORKSPACE_IMPORT_KIND, orgId: org.id } } });
+  const notice = await db.notification.create({ data: { userId: actor.id, type: 'WORKSPACE_IMPORT_READY', title: 'Ready', body: 'Fixture', metadata: { importId: run.id } } });
   await db.user.update({ where: { id: actor.id }, data: { operatingAsOrgId: org.id } });
   await db.$executeRawUnsafe('CREATE TABLE studio_delete_test_restrict (id TEXT PRIMARY KEY REFERENCES organizations(id) ON DELETE RESTRICT)');
   try {
@@ -320,7 +386,8 @@ test('an unknown restrictive dependency rolls back every deletion and workspace 
     await expect(await route.DELETE(del(org.id, confirm(review)), context(org.id)), 409);
     assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
     assert.ok(await db.project.findUnique({ where: { id: project.id } }));
-    assert.ok(await db.importSession.findUnique({ where: { id: run.id } }));
+    assert.equal((await db.importSession.findUnique({ where: { id: run.id } })).status, 'PROCESSING');
+    assert.ok(await db.notification.findUnique({ where: { id: notice.id } }));
     assert.equal((await db.user.findUnique({ where: { id: actor.id } })).operatingAsOrgId, org.id);
     assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 0);
   } finally { await db.$executeRawUnsafe('DROP TABLE studio_delete_test_restrict'); }
@@ -383,7 +450,7 @@ test('simultaneous confirmations produce one deletion receipt and both callers c
   assert.equal(await db.notification.count({ where: { userId: actor.id, type: 'STUDIO_DELETED' } }), 1);
 });
 
-test('an import committed while deletion waits on the studio lock prevents deletion', async () => {
+test('an import committed while deletion waits on the studio lock is cancelled by that deletion', async () => {
   const { actor, org } = await fixture();
   const review = await reviewStudioDeletion(actor.id, org.id);
   let locked, release;
@@ -404,7 +471,8 @@ test('an import committed while deletion waits on the studio lock prevents delet
     if (!blocked) await new Promise(resolve => setTimeout(resolve, 20));
   }
   release(); await importing;
-  await assert.rejects(deleting, /changed|import is still running/);
+  assert.equal((await deleting).deleted, true);
   assert.ok(blocked, 'deletion actually waited on the in-flight import parent lock');
-  assert.ok(await db.organization.findUnique({ where: { id: org.id } }));
+  assert.equal(await db.organization.findUnique({ where: { id: org.id } }), null);
+  assert.equal(await db.importSession.count({ where: { processingMeta: { path: ['orgId'], equals: org.id } } }), 0);
 });

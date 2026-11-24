@@ -11,7 +11,7 @@ const root = path.resolve(__dirname, '..'), out = path.join(root, '.tmp/studio-d
 fs.mkdirSync(out, { recursive: true });
 const org = { id: 'firm', name: 'Fixture Design Studio', type: 'DESIGN_FIRM', logo: null, description: null,
   tagline: null, location: 'Miami', foundedYear: null, specialties: [], projectTypes: [], serviceRegions: [], teamSizeRange: null };
-const review = { ...org, version: 'a'.repeat(64), counts: { projects: 3, publishedProjects: 2, members: 4, profileItems: 5 }, blockers: [] };
+const review = { ...org, version: 'a'.repeat(64), counts: { projects: 3, publishedProjects: 2, members: 4, profileItems: 5, activeImports: 0 }, blockers: [] };
 let role = 'ADMIN', reviewError = false, blockers = [], mode = 'error', deletes = [], release, received;
 let workspaceError = false, vendorError = false, vendorSaveError = false, noStudios = false, multipleStudios = false;
 let vendorEnabled = false, vendorWrites = [], reviewReads = [];
@@ -85,7 +85,7 @@ async function main() {
     const button = text => page.locator(`::-p-aria([name="${text}"][role="button"])`);
     const open = async () => { await button('Review studio deletion').click(); await page.waitForSelector('#studio-delete-name'); };
     const enterName = value => page.$eval('#studio-delete-name', (node, value) => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(node, value); node.dispatchEvent(new Event('input', { bubbles: true })); }, value);
-    const fill = async () => { await enterName(org.name); await page.click('[role=dialog] input[type=checkbox]'); await page.waitForFunction(() => [...document.querySelectorAll('[role=dialog] button')].some(b => b.textContent === 'Permanently delete studio' && !b.disabled)); };
+    const fill = async () => { await enterName(org.name); await page.click('[role=dialog] input[type=checkbox]'); await page.waitForFunction(label => [...document.querySelectorAll('[role=dialog] button')].some(b => b.textContent === label && !b.disabled), {}, review.counts.activeImports > 0 ? 'Stop imports and delete studio' : 'Permanently delete studio'); };
     const close = async () => {
       // Focus can arrive before Radix registers its dismissable layer. Its
       // explicit pointer-events restoration marks the interactive modal layer;
@@ -118,7 +118,18 @@ async function main() {
       assert.equal(await page.evaluate(() => document.activeElement.textContent), 'Review studio deletion');
     }
     assert.equal(deletes.length, 0, 'review/cancel never deletes');
-    blockers = ['A website or project import is still running.'];
+    review.counts.activeImports = 2;
+    await open();
+    assert.match(await page.$eval('[role=dialog]', node => node.textContent), /2 imports are still running/);
+    assert.match(await page.$eval('[role=dialog]', node => node.textContent), /including drafts added after this review/);
+    assert.equal(await page.$$eval('[role=dialog] button', nodes => nodes.find(n => n.textContent === 'Stop imports and delete studio').disabled), true);
+    await fill();
+    assert.equal(await page.$$eval('[role=dialog] button', nodes => nodes.find(n => n.textContent === 'Stop imports and delete studio').disabled), false);
+    await page.screenshot({ path: path.join(out, 'cancel-imports-mobile.png'), fullPage: false });
+    await close();
+    assert.equal(deletes.length, 0, 'cancelling the review does not stop imports or delete anything');
+    review.counts.activeImports = 0;
+    blockers = ['Billing records need to be resolved before deletion.'];
     await button('Review studio deletion').click(); await page.waitForSelector('[role=alert]');
     assert.equal(await page.$('#studio-delete-name'), null); await close(); blockers = [];
     reviewError = true;
@@ -131,13 +142,14 @@ async function main() {
     assert.equal(await page.$eval('#studio-delete-name', node => node.value), '');
     assert.equal(await page.$eval('[role=dialog] input[type=checkbox]', node => node.checked), false);
     await close();
-    deletes = []; mode = 'hold'; await open(); await fill();
+    deletes = []; mode = 'hold'; review.counts.activeImports = 1; await open(); await fill();
     const arrival = new Promise(resolve => { received = resolve; });
-    await button('Permanently delete studio').click(); await arrival;
+    await button('Stop imports and delete studio').click(); await arrival;
     await page.evaluate(() => [...document.querySelectorAll('[role=dialog] button')].forEach(b => b.click()));
     await page.keyboard.press('Escape'); assert.ok(await page.$('[role=dialog]')); assert.equal(deletes.length, 1);
     release(); await page.waitForFunction(() => window.destination === '/settings');
     assert.equal(await page.evaluate(() => window.updated), 1);
+    review.counts.activeImports = 0;
     deletes = []; mode = 'lost'; received = null; await go(); await open(); await fill();
     await button('Permanently delete studio').click(); await page.waitForSelector('[role=alert]');
     await button('Retry deletion').click(); await page.waitForFunction(() => window.destination === '/settings');

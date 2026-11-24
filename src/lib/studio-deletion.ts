@@ -7,7 +7,7 @@ export type StudioDeletionReview = {
   id: string;
   name: string;
   version: string;
-  counts: { projects: number; publishedProjects: number; members: number; profileItems: number };
+  counts: { projects: number; publishedProjects: number; members: number; profileItems: number; activeImports: number };
   blockers: string[];
 };
 
