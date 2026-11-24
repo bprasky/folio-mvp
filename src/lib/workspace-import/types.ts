@@ -5,6 +5,7 @@ export const IMPORT_LIMITS = { pages: 18, projects: 10, photos: 30 } as const;
 export type ImportSection = 'business' | 'bio' | 'projects';
 export type ImportPage = {
   url: string; kind: 'home' | 'about' | 'portfolio' | 'bio' | 'project' | 'social';
+  label?: string;
   status: 'pending' | 'saved' | 'failed'; attempts: number; error?: string;
 };
 export type ImportedProject = {

@@ -24,12 +24,20 @@ import {StudioProfileTools} from './src/components/org-profile/StudioProfileTool
 import Tabs from './src/components/org-profile/OrgProfileTabs';
 import Feed from './src/components/org-profile/OrgProfileFeed';
 import Contact from './src/components/org-profile/OrgContactTab';
+import {WorkspaceReadyPreview} from './src/components/onboarding/WorkspaceReadyPreview';
 import {profilePageStyle,resolveProfileCover} from './src/lib/org-profile-appearance';
 import styles from './src/components/org-profile/OrgProfileAppearance.module.css';
 const d=window.fixture;
 const tab=new URLSearchParams(location.search).get('tab')||'feed';
 const member=Boolean(d.role);
-function App(){return location.pathname.endsWith('/settings') ? <Settings/> : <div className={styles.page} style={profilePageStyle(d.appearance.backgroundColor)}>
+function App(){
+if(location.pathname === '/onboarding/workspace') {
+  const imported = [20, 3, 2].map((count, i) => ({id:'draft-'+i, title:'Draft '+i, isPublic:false, description:null,
+    photos:Array.from({length:count}, (_, j) => ({url:'/photo.png', alt:'Room '+j}))}));
+  return <WorkspaceReadyPreview profile={{...d, cover:null}} projects={imported} importId="import" canEditProfile canContribute
+    busy={false} description="" location="" onOpenProject={(id, review) => {window.openedProject={id,review}}}>{null}</WorkspaceReadyPreview>;
+}
+return location.pathname.endsWith('/settings') ? <Settings/> : <div className={styles.page} style={profilePageStyle(d.appearance.backgroundColor)}>
 <Hero org={d.org} appearance={d.appearance} cover={resolveProfileCover(d.appearance,d.projects)} projectCount={d.projectCount} year={2026} isMember={member} tools={d.role==='ADMIN'?<StudioProfileTools orgId="firm" next={null} isAdmin canInvite={false}>{null}</StudioProfileTools>:null}/>
 <div id="profile-content"><Tabs orgId="firm" activeTab={tab}/><div style={{padding:20}}>{tab==='contact' ? <Contact org={d.org} isMember={member} currentUser={member?{id:'member',name:'Member'}:null}/> : <Feed orgId="firm" initialFilter={new URLSearchParams(location.search).get('filter')||'all'} initialSort="featured" projectCount={4}/>}</div></div></div>}
 createRoot(document.getElementById('root')).render(<App/>);`;
@@ -94,7 +102,7 @@ async function main() {
     if (pathname === '/api/orgs/firm') return json(res, { name: org.name, membersCanPublish: true, members: [{ userId: 'admin', role }] });
     if (pathname.startsWith('/api/org/firm/feed')) return json(res, { items: projects.map((project, index) => ({ id: project.id, type: 'project', data: { id: project.id, title: project.title, heroImage: '/photo.png', storyHref: index < 3 ? '/p/' + project.id : null } })) });
     if (pathname.startsWith('/api/')) return json(res, { members: [], requests: [] });
-    if (pathname.endsWith('/settings') || pathname === '/org/firm') {
+    if (pathname.endsWith('/settings') || pathname === '/org/firm' || pathname === '/onboarding/workspace') {
       res.setHeader('Content-Type', 'text/html'); return res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script>window.fixture=${JSON.stringify({ org, appearance: saved, projects, projectCount: 4, role })}</script><script src="/bundle.js"></script></body></html>`);
     }
     const file = /\/media\//.test(pathname) ? path.join(root, '.next/static/media', path.basename(pathname)) : path.join(out, path.basename(pathname));
@@ -215,6 +223,26 @@ async function main() {
     assert.equal(saved.portrait.treatment, 'original', 'cancel preserves the saved portrait');
     await button('Edit cover').click(); await page.waitForSelector('[role=dialog]'); await button('Remove portrait').click(); await button('Save cover').click();
     await page.waitForFunction(() => !document.querySelector('[role=dialog]')); assert.equal(saved.portrait, null);
+    await page.setViewport({ width: 390, height: 844 }); await go('/onboarding/workspace?import=import');
+    await button('Add studio portrait').click();
+    const portraitInput = await page.waitForSelector('[role=dialog] input[type=file]');
+    await portraitInput.uploadFile(path.join(out, 'photo.png'));
+    await page.waitForFunction(() => document.body.textContent.includes('Cutout ready.'));
+    await button('Save portrait').click();
+    await page.waitForFunction(() => !document.querySelector('[role=dialog]') && document.querySelector('figure'));
+    assert.equal(saved.portrait.originalUrl, 'https://storage.test/upload.png');
+    await go('/onboarding/workspace?import=import');
+    await page.waitForFunction(() => document.body.textContent.includes('Edit studio portrait'));
+    const card = '[data-testid="mosaic-card-link"]';
+    assert.equal((await page.$$(card)).length, 12);
+    assert.deepEqual(await page.$$eval(card, nodes => nodes.slice(0, 3).map(n => n.getAttribute('aria-label'))),
+      ['Draft 0: Review photographs', 'Draft 1: Review photographs', 'Draft 2: Review photographs']);
+    for (const count of [24, 25]) {
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      await page.waitForFunction((selector, count) => document.querySelectorAll(selector).length === count, {}, card, count);
+    }
+    await page.$$eval(card, nodes => nodes[nodes.length - 1].click());
+    assert.deepEqual(await page.evaluate(() => window.openedProject), { id: 'draft-0', review: true });
     assert.deepEqual(errors, []);
     console.log('PASS: actual settings/public components at 1440/768/390/320; save/reload, failure retry, crop/photo selection, color contrast/reset, upload, facts/order/empty, actual tabs/mosaic, and lower-role/guest settings denial.');
     console.log(`Screenshots: ${out}`);

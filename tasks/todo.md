@@ -1712,3 +1712,12 @@ Review: The actual Settings hub, Privacy page and shared deletion dialog pass is
 Evidence: production dpl_2x7nKLc7cW9AXg96xf9EmFZdDnvZ, GET requests at 21:12 and 21:24 UTC, Prisma P2021 for public.orders. These requests never execute DELETE. Local baseline tree 1485bd8c matches current main 8b4cd4ef. No schema migration or production data write is part of this fix.
 
 Validation checkpoint: all 13 real PostgreSQL deletion tests pass, including the three new production-schema regressions. Local scoped ESLint, migration/client guards and TypeScript ratchet pass (842 current / 843 existing baseline). The unchanged browser suite passed locally but exposed an Escape-before-layer-registration race on CI; the harness now waits for the dialog's interactive pointer-event state as well as focus, retaining the keyboard dismissal assertion. Final hosted browser/build checks are required before release; local Next compilation still encounters the existing Windows EPERM output-directory issue.
+
+## Firm import first look
+
+- [x] Surface the founder/team portrait editor directly on the private preview.
+- [x] Carry source project names into the import and recover studio-only names in existing previews.
+- [x] Show one photograph per project before repeat views and append the next photographs on scroll.
+- [x] Verify uneven project sizes, older drafts, editor access, and scroll behavior.
+
+Local checks passed for import, publication, portrait handling, and the preview DOM with 25 photos across three projects. The DOM check exercised the scroll observer, project selection, portrait upload and saving. Hosted Chromium covers actual scrolling.

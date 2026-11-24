@@ -46,7 +46,7 @@ export function extractWebsitePage(html: string, url: string, personName = '') {
     if (!href || seen.has(href) || !sameWebsite(href, url)) return;
     const pathname = new URL(href).pathname.replace(/\/+$/, '');
     if (excluded.test(pathname) || /\.(pdf|zip|jpg|png|svg|mp4)$/i.test(pathname)) return;
-    const label = clean($(anchor).text() || $(anchor).find('img').attr('alt') || '').slice(0, 160);
+    const label = (clean($(anchor).text()) || clean($(anchor).attr('aria-label') || $(anchor).find('img').attr('alt') || '')).slice(0, 160);
     let kind: ImportPage['kind'] | undefined;
     if (personName && label.toLowerCase().includes(personName.toLowerCase())) kind = 'bio';
     else if (/\/(?:about|studio|our-story|about-us|team|people|founders|leadership)(?:\/|$)/i.test(pathname)) kind = 'about';

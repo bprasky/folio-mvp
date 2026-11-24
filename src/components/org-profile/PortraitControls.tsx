@@ -82,6 +82,7 @@ export default function PortraitControls({ orgId, importId, portrait, onChange, 
   return <section aria-label="Founder portrait" className={styles.portraitControls}>
     <h3>The people behind the studio</h3>
     <p>Choose a founder or team photograph to place over your project. Check that the people shown belong to your studio.</p>
+    <label>Upload a portrait<input type="file" disabled={busy} accept="image/jpeg,image/png,image/webp" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ''; }} /></label>
     {loading ? <p role="status">Looking for portrait suggestions…</p> : candidate ? <div>
       <div className={styles.candidatePhoto}><SafeImage key={candidate.id} src={candidate.previewUrl} alt={candidate.label} fill unoptimized sizes="300px" /></div>
       <div className={styles.inlineControls}>
@@ -91,9 +92,8 @@ export default function PortraitControls({ orgId, importId, portrait, onChange, 
         <a href={candidate.sourceUrl} target="_blank" rel="noreferrer" className={styles.textButton}>View source</a>
       </div>
       <button type="button" className={styles.saveButton} disabled={busy} onClick={() => void choose(candidate)}>Use this photograph</button>
-    </div> : <p>No portrait suggestions were found. You can upload a founder or team photograph below. Instagram photos are available only when the linked public page can be read.</p>}
+    </div> : <p>No portrait suggestions were found.</p>}
     <fieldset disabled={busy}>
-      <label className="mt-4">Upload a portrait<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ''; }} /></label>
       {portrait && <div className="mt-4 space-y-4">
         <div className={styles.inlineControls}>
           <button type="button" className={styles.textButton} aria-pressed={portrait.treatment === 'original'} onClick={() => onChange({ ...portrait, treatment: 'original' })}>Original photo</button>

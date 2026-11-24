@@ -1352,3 +1352,7 @@ The Settings hub promised account deletion under Privacy while the new studio-de
 ## 2026-11-20 - Test deletion against deployed optional schema
 
 A fresh Prisma schema hid that commerce orders are not provisioned in production. Destructive workflows must check a known optional table's catalog entry before querying it; catching a missing-table exception inside a PostgreSQL transaction cannot recover the aborted transaction. Only confirmed absence permits skipping that table, while malformed tables and all other errors must stop deletion. Test both schema states with real PostgreSQL, retain financial blockers, and distinguish failed read-only review from uncertain post-confirmation results in user copy. Verify the deployed review path before calling the feature ready.
+
+## 2026-11-24 - Diagnose the first import from the private preview
+
+A docked developer panel narrows the effective viewport. Verify the project IDs, source titles, card ordering and owner actions on the reported import screen before changing responsive breakpoints.

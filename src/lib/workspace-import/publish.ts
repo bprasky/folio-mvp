@@ -6,6 +6,7 @@ import { PortfolioPublishInput, portfolioReviewVersion, publishPortfolio } from 
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
 import { ownedImport, WorkspaceImportError } from './store';
 import { IMPORT_LIMITS } from './types';
+import { reviewProjectTitle } from './project-title';
 
 export const ImportPublishInput = z.object({ projects: z.array(PortfolioPublishInput).min(1).max(IMPORT_LIMITS.projects) }).strict();
 async function access(userId: string, id: string) {
@@ -27,7 +28,8 @@ export async function readImportPublication(userId: string, id: string) {
   return { profileHref: `/org/${encodeURIComponent(run.orgId)}`, projects: projects.flatMap(project => {
     const photos = project.images.filter(image => image.url && !isDocumentImage(image.name));
     if (!photos.length) return [];
-    return [{ projectId: project.id, title: project.title, version: portfolioReviewVersion(project),
+    const title = reviewProjectTitle(run, project, run.projects.find(item => item.projectId === project.id));
+    return [{ projectId: project.id, title, version: portfolioReviewVersion(project),
       coverImageId: project.portfolioCoverImageId, photos: photos.map(({ id, url, name, inclusion }) => ({ id, url, name, inclusion })) }];
   }) };
 }

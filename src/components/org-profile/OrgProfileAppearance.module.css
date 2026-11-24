@@ -214,6 +214,7 @@
 }
 @media (max-width: 850px) {
   .coverEditorBody { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+  .coverEditorBody[data-panel="portrait"] .coverEditorControls { grid-row: 1; }
   .coverEditorPreview { position: static; }
   .sheetHeader { padding: 18px; }
   .sheetFooter { flex-wrap: wrap; padding: 14px 18px; }

@@ -10,6 +10,7 @@ import { requestIdentity } from '@/lib/persistence/requestIdentity';
 import { createProjectOnce } from '@/lib/projects/createProject';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { extractWebsitePage, sameWebsite, websiteUrl } from './extract';
+import { importProjectTitle } from './project-title';
 import { assertImportSections, importJson, saveImport, WorkspaceImportError } from './store';
 import { IMPORT_LIMITS, WORKSPACE_IMPORT_KIND, importSummary, isWorkspaceImport, type WorkspaceImport, type ImportPage, type ImportedProject } from './types';
 
@@ -75,14 +76,19 @@ export function collectPage(run: WorkspaceImport, page: ImportPage, result: Retu
     if (bio) { run.profile.bio = bio; run.profile.bioSourceUrl = page.url; }
   }
   if (run.sections.includes('projects') && page.kind === 'project' && !run.projects.some(project => project.url === page.url)) {
-    if (run.projects.length < IMPORT_LIMITS.projects) run.projects.push({ url: page.url, title: result.title || 'Imported project',
+    const title = importProjectTitle(run, page.url, result.title, page.label);
+    if (run.projects.length < IMPORT_LIMITS.projects) run.projects.push({ url: page.url, title,
       description: result.description, status: 'pending', attempts: 0,
       photos: result.images.map(image => ({ ...image, status: 'pending', attempts: 0 })) });
     else note(run, `We reached the ${IMPORT_LIMITS.projects}-project limit for this import. You can add any remaining projects in your workspace.`);
-    if (result.imageCount > IMPORT_LIMITS.photos) note(run, `${result.title}: the first ${IMPORT_LIMITS.photos} photographs were selected. Add any remaining photographs in the project.`);
+    if (result.imageCount > IMPORT_LIMITS.photos) note(run, `${title}: the first ${IMPORT_LIMITS.photos} photographs were selected. Add any remaining photographs in the project.`);
   }
   if (page.kind !== 'project' && page.kind !== 'social') for (const link of result.links) {
-    if (run.pages.some(value => value.url === link.url)) continue;
+    const existing = run.pages.find(value => value.url === link.url);
+    if (existing) {
+      if (existing.kind === 'project' && !existing.label) existing.label = link.label;
+      continue;
+    }
     if ((link.kind === 'project' || link.kind === 'portfolio') && !run.sections.includes('projects')) continue;
     if (link.kind === 'about' && !run.sections.includes('business') && !run.sections.includes('bio')) continue;
     if (link.kind === 'bio' && !run.sections.includes('bio')) continue;
@@ -90,7 +96,7 @@ export function collectPage(run: WorkspaceImport, page: ImportPage, result: Retu
     if (link.kind === 'project' && run.pages.filter(value => value.kind === 'project').length >= IMPORT_LIMITS.projects) {
       note(run, `We found more than ${IMPORT_LIMITS.projects} projects. You can add the remaining work in your workspace.`); continue;
     }
-    run.pages.push({ url: link.url, kind: link.kind, status: 'pending', attempts: 0 });
+    run.pages.push({ url: link.url, kind: link.kind, ...(link.kind === 'project' && { label: link.label }), status: 'pending', attempts: 0 });
   }
   page.status = 'saved';
   delete page.error;
