@@ -4,14 +4,18 @@ function replace(name,exports){const id=require.resolve(name.startsWith('src/')?
 replace('server-only',{});
 const ids=['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'];
 let permission=true,owner='owner',phase='complete',lease,failSecond=false,allowProjects=true,calls=[];
+const portrait = { originalUrl: 'https://storage.test/team.png', cutoutUrl: null, treatment: 'original', caption: '', scale: 100, position: 50 };
+let appearance = null, canEditProfile = true;
 replace('src/lib/permissions.ts',{canPublishFromOrg:async()=>({ok:permission})});
 replace('src/lib/authz/access.ts',{});
 class WorkspaceImportError extends Error{constructor(message,status=400){super(message);this.status=status}}
-replace('src/lib/workspace-import/store.ts',{WorkspaceImportError,ownedImport:async actor=>{if(actor!==owner)throw new WorkspaceImportError('Forbidden',403);return{run:{orgId:'studio',phase,lease,projects:ids.map(projectId=>({projectId}))}}}});
+replace('src/lib/workspace-import/store.ts',{WorkspaceImportError,importAccess:async()=>({canEditProfile}),ownedImport:async actor=>{if(actor!==owner)throw new WorkspaceImportError('Forbidden',403);return{run:{orgId:'studio',phase,lease,profile:{portrait},projects:ids.map(projectId=>({projectId}))}}}});
 const photos=[{id:'11111111-1111-4111-8111-111111111111',url:'https://image.test/photo',name:'Living room',inclusion:'INCLUDED',roomId:null,updatedAt:new Date(0)},
   {id:'22222222-2222-4222-8222-222222222222',url:'https://image.test/spec',name:'finish-schedule.pdf',inclusion:'EXCLUDED',roomId:null,updatedAt:new Date(0)}];
 const projects=ids.map(id=>({id,title:'House',updatedAt:new Date(0),portfolioPublishedAt:null,portfolioCoverImageId:null,post:{status:'DRAFT'},images:photos}));
-replace('src/lib/prisma.ts',{prisma:{project:{findMany:async q=>{assert.equal(q.where.ownerId,'owner');assert.equal(q.where.designerOrgId,'studio');return allowProjects?projects.filter(p=>q.where.id.in.includes(p.id)):[]}}}});
+const org = { findUniqueOrThrow:async()=>({profileAppearance:appearance,updatedAt:new Date(0)}),
+  updateMany:async({data})=>{appearance=data.profileAppearance;return {count:1}} };
+replace('src/lib/prisma.ts',{prisma:{organization:org,$transaction:async fn=>fn({organization:org}),project:{findMany:async q=>{assert.equal(q.where.ownerId,'owner');assert.equal(q.where.designerOrgId,'studio');return allowProjects?projects.filter(p=>q.where.id.in.includes(p.id)):[]}}}});
 const portfolio=require('../src/lib/publish/portfolio.ts');
 replace('src/lib/publish/portfolio.ts',{...portfolio,publishPortfolio:async(actor,input)=>{assert.equal(actor,'owner');calls.push(input);if(failSecond&&input.projectId===ids[1])throw Error('Stale review');return{projectId:input.projectId}}});
 const batch=require('../src/lib/workspace-import/publish.ts');
@@ -32,5 +36,19 @@ const batch=require('../src/lib/workspace-import/publish.ts');
   failSecond=true;let result=await batch.publishImport('owner','import',input);
   assert.deepEqual(result.results.map(r=>r.published),[true,false]);assert.deepEqual(calls,input.projects);
   failSecond=false;result=await batch.publishImport('owner','import',{projects:[input.projects[1]]});assert.equal(result.results[0].published,true);
+  assert.equal(appearance,null);
+  assert.equal(review.proposedPortrait,portrait.originalUrl);
+  const withPortrait={...input,reviewedPortrait:review.proposedPortrait};
+  await assert.rejects(batch.publishImport('owner','import',{...withPortrait,reviewedPortrait:'https://other.test/portrait.jpg'}),e=>e.status===409);
+  canEditProfile=false;
+  assert.equal((await batch.readImportPublication('owner','import')).proposedPortrait,undefined);
+  assert.ok((await batch.publishImport('owner','import',withPortrait)).portraitError);
+  assert.equal(appearance,null);
+  canEditProfile=true;
+  await batch.publishImport('owner','import',withPortrait);
+  assert.deepEqual(appearance.portrait,portrait);
+  appearance.portrait=null;
+  await batch.publishImport('owner','import',withPortrait);
+  assert.equal(appearance.portrait,null,'a saved removal supersedes the staged default on replay');
   console.log('PASS imported-photo publication: ready import, active publisher, exact reviewed versions, scoped project set, partial results and retry delegation');
 })().catch(e=>{console.error(e);process.exitCode=1});

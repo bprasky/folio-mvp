@@ -18,6 +18,8 @@ type UIEvent = {
   startDate?: string | null;  // for alt shapes
   href?: string | null;
   isDraft?: boolean;
+  projectId?: string;
+  imageAlt?: string;
   actionLabel?: string;
 };
 
@@ -25,6 +27,7 @@ export type FlowMosaicProps = {
   events: UIEvent[];
   canEdit?: boolean;
   preserveOrder?: boolean;
+  visibleCount?: number;
   onSelect?: (id: string) => void;
   disabled?: boolean;
 };
@@ -122,7 +125,7 @@ function hasRSVP(e: UIEvent) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-export default function FlowMosaic({ events, canEdit = false, preserveOrder = false, onSelect, disabled = false }: FlowMosaicProps) {
+export default function FlowMosaic({ events, canEdit = false, preserveOrder = false, visibleCount, onSelect, disabled = false }: FlowMosaicProps) {
   const sized = useMemo(
     () => preserveOrder ? assignSizesInOrder(events) : assignSizes(events),
     [events, preserveOrder]
@@ -130,11 +133,11 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
   return (
     <div
       className={clsx(
-        "grid grid-flow-dense folio-editorial-microgrid",
+        "grid folio-editorial-microgrid", visibleCount === undefined ? "grid-flow-dense" : "grid-flow-row",
         "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6"
       )}
     >
-      {sized.map(({ item, size }) => {
+      {sized.slice(0, visibleCount).map(({ item, size }) => {
         const { className, rowSpan } = tileLayout[size];
         const href = item.href === undefined ? `/events/${item.id}` : item.href;
         const img = pickImage(item);
@@ -148,7 +151,7 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
             )}
             style={{ gridRowEnd: `span ${rowSpan}` }}
           >
-            {onSelect ? <button type="button" disabled={disabled} onClick={() => onSelect(item.id)}
+            {onSelect ? <button type="button" disabled={disabled} onClick={() => onSelect(item.projectId ?? item.id)}
               className="absolute inset-0 z-30 block w-full rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
               aria-label={`${item.title}: ${item.actionLabel || 'Open project'}`} data-testid="mosaic-card-link" />
               : href && <Link href={href} className="absolute inset-0 z-30 block" aria-label={item.title ?? "View event"} data-testid="mosaic-card-link" />}
@@ -158,7 +161,7 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
                 {img ? (
                   <SafeImage
                     src={img}
-                    alt={item.title ?? "Event"}
+                    alt={item.imageAlt || item.title || "Event"}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                     className={clsx("object-cover", item.isDraft && "grayscale-[0.45] opacity-70 transition group-hover:grayscale-0 group-hover:opacity-100 group-focus-within:grayscale-0 group-focus-within:opacity-100")}

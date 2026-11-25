@@ -10,6 +10,9 @@ import { requestIdentity } from '@/lib/persistence/requestIdentity';
 import { createProjectOnce } from '@/lib/projects/createProject';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { extractWebsitePage, sameWebsite, websiteUrl } from './extract';
+import { importProjectTitle } from './project-title';
+import { portraitPriority, prepareImportPortrait } from './portrait';
+import { readOrgAppearance } from '@/lib/org-profile-appearance';
 import { assertImportSections, importJson, saveImport, WorkspaceImportError } from './store';
 import { IMPORT_LIMITS, WORKSPACE_IMPORT_KIND, importSummary, isWorkspaceImport, type WorkspaceImport, type ImportPage, type ImportedProject } from './types';
 
@@ -34,7 +37,8 @@ async function readPage(url: string, kind: ImportPage['kind'], includeProjects: 
       const extracted = extractWebsitePage(html, current);
       const missingPortfolio = includeProjects && (kind === 'home' || kind === 'portfolio') && !extracted.links.some(link => link.kind === 'project' || link.kind === 'portfolio');
       const missingPhotos = kind === 'project' && extracted.images.length === 0;
-      if (!hasRenderWorker() || (extracted.text.length > 100 && !missingPortfolio && !missingPhotos)) return { html, url: current };
+      const missingTeamImages = kind === 'about' && !extracted.portraitCandidates.length;
+      if (!hasRenderWorker() || (extracted.text.length > 100 && !missingPortfolio && !missingPhotos && !missingTeamImages)) return { html, url: current };
     }
     break;
   }
@@ -49,15 +53,18 @@ async function readPage(url: string, kind: ImportPage['kind'], includeProjects: 
 export function collectPage(run: WorkspaceImport, page: ImportPage, result: ReturnType<typeof extractWebsitePage>) {
   if (run.sections.includes('business')) {
     run.profile.portraitCandidates ||= [];
-    const candidates = page.kind === 'social' ? result.images.slice(0, 2).map(image => ({
+    const instagram = page.kind === 'social' && /^(www\.)?instagram\.com$/i.test(new URL(page.url).hostname);
+    const socialPhotos = result.socialProfileImage ? [{ url: result.socialProfileImage }] : result.images.slice(0, 2);
+    const candidates = instagram ? socialPhotos.map(image => ({
       url: image.url, sourceUrl: page.url, label: 'Instagram profile photograph',
     })) : result.portraitCandidates;
     for (const candidate of candidates || []) {
-      if (run.profile.portraitCandidates.length >= 8) break;
-      if (!run.profile.portraitCandidates.some(saved => saved.url === candidate.url))
-        run.profile.portraitCandidates.push({ ...candidate, id: requestIdentity('founder-portrait', [run.orgId, candidate.url]) });
+      const existing = run.profile.portraitCandidates.find(saved => saved.url === candidate.url);
+      if (!existing) run.profile.portraitCandidates.push({ ...candidate, id: requestIdentity('founder-portrait', [run.orgId, candidate.url]) });
+      else if (portraitPriority(candidate) > portraitPriority(existing)) Object.assign(existing, candidate);
     }
-    if (page.kind !== 'social' && result.instagramUrl && !run.profile.instagramUrl) {
+    run.profile.portraitCandidates.sort((a, b) => portraitPriority(b) - portraitPriority(a)).splice(8);
+    if (!instagram && result.instagramUrl && !run.profile.instagramUrl) {
       run.profile.instagramUrl = result.instagramUrl;
       if (run.pages.length < IMPORT_LIMITS.pages) run.pages.push({ url: result.instagramUrl, kind: 'social', status: 'pending', attempts: 0 });
     }
@@ -75,14 +82,20 @@ export function collectPage(run: WorkspaceImport, page: ImportPage, result: Retu
     if (bio) { run.profile.bio = bio; run.profile.bioSourceUrl = page.url; }
   }
   if (run.sections.includes('projects') && page.kind === 'project' && !run.projects.some(project => project.url === page.url)) {
-    if (run.projects.length < IMPORT_LIMITS.projects) run.projects.push({ url: page.url, title: result.title || 'Imported project',
+    const title = importProjectTitle(run, page.url, result.title, page.label);
+    if (run.projects.length < IMPORT_LIMITS.projects) run.projects.push({ url: page.url, title,
       description: result.description, status: 'pending', attempts: 0,
       photos: result.images.map(image => ({ ...image, status: 'pending', attempts: 0 })) });
     else note(run, `We reached the ${IMPORT_LIMITS.projects}-project limit for this import. You can add any remaining projects in your workspace.`);
-    if (result.imageCount > IMPORT_LIMITS.photos) note(run, `${result.title}: the first ${IMPORT_LIMITS.photos} photographs were selected. Add any remaining photographs in the project.`);
+    if (result.imageCount > IMPORT_LIMITS.photos) note(run, `${title}: the first ${IMPORT_LIMITS.photos} photographs were selected. Add any remaining photographs in the project.`);
   }
   if (page.kind !== 'project' && page.kind !== 'social') for (const link of result.links) {
-    if (run.pages.some(value => value.url === link.url)) continue;
+    if (link.kind === 'social' && !run.sections.includes('business')) continue;
+    const existing = run.pages.find(value => value.url === link.url);
+    if (existing) {
+      if (existing.kind === 'project' && !existing.label) existing.label = link.label;
+      continue;
+    }
     if ((link.kind === 'project' || link.kind === 'portfolio') && !run.sections.includes('projects')) continue;
     if (link.kind === 'about' && !run.sections.includes('business') && !run.sections.includes('bio')) continue;
     if (link.kind === 'bio' && !run.sections.includes('bio')) continue;
@@ -90,7 +103,7 @@ export function collectPage(run: WorkspaceImport, page: ImportPage, result: Retu
     if (link.kind === 'project' && run.pages.filter(value => value.kind === 'project').length >= IMPORT_LIMITS.projects) {
       note(run, `We found more than ${IMPORT_LIMITS.projects} projects. You can add the remaining work in your workspace.`); continue;
     }
-    run.pages.push({ url: link.url, kind: link.kind, status: 'pending', attempts: 0 });
+    run.pages.push({ url: link.url, kind: link.kind, ...(link.kind === 'project' && { label: link.label }), status: 'pending', attempts: 0 });
   }
   page.status = 'saved';
   delete page.error;
@@ -229,6 +242,18 @@ export async function advanceImport(userId: string, id: string, run: WorkspaceIm
     return;
   }
   if (run.phase === 'profiles') {
+    const candidate = run.sections.includes('business') && !run.profile.portrait &&
+      run.profile.portraitCandidates?.find(item => !run.profile.triedPortraitIds?.includes(item.id));
+    if (candidate) {
+      const org = await prisma.organization.findUniqueOrThrow({ where: { id: run.orgId }, select: { profileAppearance: true } });
+      if (readOrgAppearance(org.profileAppearance).portrait === undefined) {
+        (run.profile.triedPortraitIds ||= []).push(candidate.id);
+        try {
+          run.profile.portrait = await prepareImportPortrait(userId, run.orgId, id, candidate);
+        } catch { /* One unreadable photo must not prevent the next candidate or the rest of the import. */ }
+        return; // Checkpoint one candidate per worker unit.
+      }
+    }
     run.profileAttempts++;
     try { await prepareProfiles(run); }
     catch { if (run.profileAttempts >= 2) { note(run, 'Profile text is saved, but some preparation could not finish. Review the available details.'); run.profileReady = true; run.profileFailed = true; run.phase = 'projects'; } }

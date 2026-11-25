@@ -138,7 +138,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   const field = `${styles.field} mt-2`;
   const card = `${styles.section} space-y-4`;
   const run = review?.run;
-  const showPreview = !!review?.profile && review.canReview && !!(review.projects.length || run?.profile.description || run?.profile.logo || run?.profile.bio);
+  const showPreview = !!review?.profile && review.canReview && !!(review.projects.length || run?.profile.portrait || run?.profile.description || run?.profile.logo || run?.profile.bio);
   const controls = <div className={showPreview ? 'workspace-review-panel' : 'space-y-6'}>
     {error ? <p role="alert" className="auth-message auth-message--error">{error}</p> : null}
     {notice ? <p role="status" className="auth-message">{notice}</p> : null}
@@ -188,7 +188,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   </div>;
   return <ProfessionalSetupFrame stage="workspace" wide={showPreview}>
     {showPreview && review?.profile ? <WorkspaceReadyPreview profile={review.profile}
-      key={review.id} importId={review.id} canEditProfile={review.access.canEditProfile}
+      key={review.id} importId={review.id} importedPortrait={run?.profile.portrait} canEditProfile={review.access.canEditProfile}
       description={description} location={location} logo={useLogo ? run?.profile.logo : review.business.logo}
       projects={review.projects} busy={busy} canContribute={review.access.canContribute}
       onOpenProject={(projectId, reviewPhotos) => void continueToFolio('/project/' + encodeURIComponent(projectId) + (reviewPhotos ? '?publish=photos' : ''))}>
@@ -204,7 +204,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
       {!access.canContribute ? <p className="folio-body">Your business access is view only. Ask a business admin for permission to contribute.</p> : !available ? <p className="folio-body">Website imports aren’t available yet. You can add your business details and projects manually.</p> : <form onSubmit={start} className="space-y-6">
         <label className={styles.label}>Business website<input className={field} type="text" inputMode="url" autoComplete="url" required maxLength={2048} value={website} onChange={event => setWebsite(event.target.value)} placeholder="yourstudio.com" /></label>
         <fieldset className="import-choices"><legend className="folio-ui">What would you like to bring over?</legend>
-          {access.canEditProfile ? <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('business')} onChange={() => toggle('business')} /><span><strong className="folio-ui">Your business</strong><span className="block folio-meta text-folio-text-secondary">Your logo, About text, location, and founder photo suggestions.</span></span></label> : null}
+          {access.canEditProfile ? <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('business')} onChange={() => toggle('business')} /><span><strong className="folio-ui">Your business</strong><span className="block folio-meta text-folio-text-secondary">Your logo, About text, and location. When we find a studio portrait, it appears on your private cover, ready to change.</span></span></label> : null}
           <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('bio')} onChange={() => toggle('bio')} /><span><strong className="folio-ui">Your bio</strong><span className="block folio-meta text-folio-text-secondary">We’ll look for your background on the site, using your name.</span></span></label>
           {access.canImportProjects ? <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('projects')} onChange={() => toggle('projects')} /><span><strong className="folio-ui">Your projects</strong><span className="block folio-meta text-folio-text-secondary">Photographs and descriptions, ready to add to your public profile. Add rooms, materials and your interview later for a Folio Feature.</span></span></label> : null}
         </fieldset>

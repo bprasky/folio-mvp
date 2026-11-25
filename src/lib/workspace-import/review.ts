@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { bioSourceFingerprint } from './prepared';
 import { assertImportSections, importAccess, ownedImport, saveImport, WorkspaceImportError } from './store';
 import { hasUnfinishedItems, importSummary } from './types';
+import { reviewProjectTitle } from './project-title';
 import { getOrgProfileAppearanceData } from '@/lib/server/org-profile-appearance';
 
 export const reviewSchema = z.discriminatedUnion('action', [
@@ -29,12 +30,18 @@ export async function readImportReview(userId: string, id: string) {
   const { lease, notification, ...visible } = run;
   const bioData = bio?.scrapedData as { bio?: unknown } | null;
   projects.sort((a, b) => run.projects.findIndex(item => item.projectId === a.id) - run.projects.findIndex(item => item.projectId === b.id));
-  const previewProjects = projects.map(project => ({ id: project.id, title: project.title, description: project.description, isPublic: project.isPublic,
-    hasSavedProgress: project._count.editorialInterviews > 0 || project._count.images > 0,
-    photos: project.images.map(image => {
-      const source = run.projects.find(item => item.projectId === project.id)?.photos.find(photo => photo.imageId === image.id);
-      return { url: image.url, alt: image.name || project.title, width: source?.width, height: source?.height };
-    }) }));
+  const previewProjects = projects.map(project => {
+    const sourceProject = run.projects.find(item => item.projectId === project.id);
+    const title = reviewProjectTitle(run, project, sourceProject);
+    return {
+      id: project.id, title, description: project.description, isPublic: project.isPublic,
+      hasSavedProgress: project._count.editorialInterviews > 0 || project._count.images > 0,
+      photos: project.images.map(image => {
+        const source = sourceProject?.photos.find(photo => photo.imageId === image.id);
+        return { url: image.url, alt: image.name || title, width: source?.width, height: source?.height };
+      }),
+    };
+  });
   return { id, run: { ...visible, notification: { status: notification.status, error: notification.error, attempts: notification.attempts } },
     summary: importSummary(run), access, business, projects: previewProjects,
     profile: profile ? { org: profile.org, appearance: profile.appearance, cover: profile.cover, projectCount: profile.projectCount } : null,

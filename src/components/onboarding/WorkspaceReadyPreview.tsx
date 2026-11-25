@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
-import FlowMosaic from '@/components/feed/FlowMosaic';
+import FlowMosaic, { type FlowMosaicProps } from '@/components/feed/FlowMosaic';
 import { profilePageStyle, type OrgAppearanceData, type OrgProfileAppearance, type ProfileCover } from '@/lib/org-profile-appearance';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import OrgCoverEditor from '@/components/org-profile/OrgCoverEditor';
@@ -18,6 +18,7 @@ type Props = {
   onOpenProject: (id: string, reviewPhotos: boolean) => void;
   children: ReactNode;
   importId?: string; canEditProfile?: boolean;
+  importedPortrait?: OrgProfileAppearance['portrait'];
 };
 
 // Only used for automatic covers in this owner-only preview. Saved appearance
@@ -29,19 +30,47 @@ export function workspaceCover(projects: WorkspacePreviewProject[]) {
   return photos.reduce<typeof photos[number] | undefined>((best, photo) => !best || score(photo) > score(best) ? photo : best, undefined);
 }
 
-export function WorkspaceReadyPreview({ profile, description, location, logo, projects, busy, canContribute, canEditProfile = false, importId, onOpenProject, children }: Props) {
+const PHOTO_BATCH = 12;
+
+export function workspacePhotoCards(projects: WorkspacePreviewProject[], canContribute: boolean) {
+  const rounds: Array<FlowMosaicProps['events']> = [];
+  for (const project of projects) {
+    project.photos.forEach((photo, index) => {
+      const round = rounds[index] ?? (rounds[index] = []);
+      round.push({ id: `${project.id}:${index}`, projectId: project.id, title: project.title, imageUrl: photo.url, imageAlt: photo.alt,
+        isDraft: !project.isPublic, actionLabel: project.isPublic || !canContribute ? 'Open project' : 'Review photographs' });
+    });
+  }
+  return rounds.flat();
+}
+
+export function WorkspaceReadyPreview({ profile, description, location, logo, projects, busy, canContribute, canEditProfile = false, importId, importedPortrait, onOpenProject, children }: Props) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [tab, setTab] = useState<'feed' | 'about'>('feed');
   const [savedAppearance, setSavedAppearance] = useState<OrgProfileAppearance | null>(null);
   const [savedCover, setSavedCover] = useState<ProfileCover>(null);
-  const appearance = savedAppearance || profile.appearance;
+  const current = savedAppearance || profile.appearance;
+  // A saved null records the owner's decision to remove the portrait.
+  const appearance = current.portrait === undefined && importedPortrait ? { ...current, portrait: importedPortrait } : current;
   const automaticCover = workspaceCover(projects);
   const cover = appearance.cover.kind === 'auto' && automaticCover ? automaticCover : appearance.cover.kind === 'none' ? null : savedAppearance ? savedCover : profile.cover;
   const org = { ...profile.org, description, location, logo: logo ?? null };
-  const photographed = projects.filter(project => project.photos.length).map(project => ({
-    id: project.id, title: project.title, imageUrl: project.photos[0].url, isDraft: !project.isPublic,
-    actionLabel: project.isPublic || !canContribute ? 'Open project' : 'Review photographs',
-  }));
+  const cards = useMemo(() => workspacePhotoCards(projects, canContribute), [projects, canContribute]);
+  const [visibleCount, setVisibleCount] = useState(PHOTO_BATCH);
+  const endOfPhotos = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const end = endOfPhotos.current;
+    if (!end || tab !== 'feed' || visibleCount >= cards.length) return;
+    if (!('IntersectionObserver' in window)) { setVisibleCount(cards.length); return; }
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        observer.disconnect();
+        setVisibleCount(Math.min(visibleCount + PHOTO_BATCH, cards.length));
+      }
+    }, { rootMargin: '500px 0px' });
+    observer.observe(end);
+    return () => observer.disconnect();
+  }, [cards.length, tab, visibleCount]);
   const withoutPhotos = projects.filter(project => !project.photos.length);
   const open = (id: string) => {
     const project = projects.find(candidate => candidate.id === id);
@@ -53,7 +82,7 @@ export function WorkspaceReadyPreview({ profile, description, location, logo, pr
     </div>
     <OrgProfileHero org={org} appearance={appearance} cover={cover}
       tools={<div className={profileStyles.inlineControls}>
-        {canEditProfile && <OrgCoverEditor orgId={org.id} importId={importId} previewCover={automaticCover || null} onSaved={(nextAppearance, nextCover) => { setSavedAppearance(nextAppearance); setSavedCover(nextCover); }} />}
+        {canEditProfile && <OrgCoverEditor orgId={org.id} importId={importId} importedPortrait={importedPortrait} portraitAction={appearance.portrait ? 'Change portrait' : 'Add studio portrait'} previewCover={automaticCover || null} onSaved={(nextAppearance, nextCover) => { setSavedAppearance(nextAppearance); setSavedCover(nextCover); }} />}
         <button type="button" className={profileStyles.manageTrigger} onClick={() => setReviewOpen(true)}>Review &amp; publish</button>
       </div>}
       projectCount={profile.projectCount + projects.filter(project => !project.isPublic).length} year={new Date().getFullYear()} preview />
@@ -64,10 +93,8 @@ export function WorkspaceReadyPreview({ profile, description, location, logo, pr
     {tab === 'about' && <OrgAboutTab org={org} team={[]} isOwner={false} />}
     {tab === 'feed' && projects.length > 0 && <section className="workspace-preview__projects" aria-label="Your imported projects">
       <div className="workspace-preview__section-heading"><h2>Your projects</h2><p>{projects.length} {projects.length === 1 ? 'project' : 'projects'} from your website</p></div>
-      {photographed.length > 0 && <FlowMosaic events={photographed.slice(0, 4)} preserveOrder disabled={busy} onSelect={open} />}
-      {photographed.length > 4 && <details className="workspace-preview__more"><summary>Show {photographed.length - 4} more {photographed.length === 5 ? 'project' : 'projects'}</summary>
-        <FlowMosaic events={photographed.slice(4)} preserveOrder disabled={busy} onSelect={open} />
-      </details>}
+      {cards.length > 0 && <FlowMosaic events={cards} visibleCount={visibleCount} preserveOrder disabled={busy} onSelect={open} />}
+      {visibleCount < cards.length && <div ref={endOfPhotos} className="h-px" aria-hidden="true" />}
       {!!withoutPhotos.length && <ul className="workspace-preview__list">{withoutPhotos.map(project => <li key={project.id}>
         <button type="button" disabled={busy} onClick={() => open(project.id)}>
           <span>{project.title}<small>{project.isPublic ? 'Published' : 'Private draft'}</small></span>

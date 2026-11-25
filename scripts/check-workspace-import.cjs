@@ -15,10 +15,10 @@ const env = { CRON_SECRET: 'synthetic-cron', RESEND_API_KEY: 'synthetic-resend',
 class Clock extends Date { constructor(...args) { super(...(args.length ? args : [now])); } static now() { return now; } }
 const html = {
   '/': '<html><header><img src="/logo.png" alt="Studio logo"></header><main><h1>North Studio</h1><p>A small architecture practice creating thoughtful places for everyday life.</p><a href="/about">About</a><a href="/work">Projects</a><a href="/team/jane">Jane Designer</a></main></html>',
-  '/about': '<main><h1>About North Studio</h1><p>We are an architecture practice shaped by light, materials, and the way people live.</p></main>',
+  '/about': '<main><h1>About North Studio</h1><p>We are an architecture practice shaped by light, materials, and the way people live.</p><img src="/team.png" alt="Studio founders"></main>',
   '/team/jane': '<main><h1>Jane Designer</h1><p>Jane studied architecture and established a practice focused on generous, adaptable homes.</p></main>',
   '/work': '<main><a href="/work/harbor">Harbor House</a><a href="/work/court">Court House</a></main>',
-  '/work/harbor': '<main><h1>Harbor House</h1><p>The home opens toward the harbor through a sequence of bright, connected rooms.</p><img src="/harbor.png" alt="Harbor living room"></main>',
+  '/work/harbor': '<header><h1>North Studio</h1></header><main><p>The home opens toward the harbor through a sequence of bright, connected rooms.</p><img src="/harbor.png" alt="Harbor living room"></main>',
   '/work/court': '<main><h1>Court House</h1><p>A quiet courtyard brings daylight into the center of this home in the city.</p><img src="/court.png" alt="Courtyard"></main>',
 };
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3foAAAAASUVORK5CYII=', 'base64');
@@ -59,7 +59,7 @@ function load(file) {
       if (name === 'next-auth') return { getServerSession: async () => authUser ? { user: { id: authUser } } : null };
       if (name === '@/app/api/auth/[...nextauth]/options') return {};
       if (name === 'next/server') return { NextResponse: Response };
-      if (name === 'next/navigation') return { redirect: destination => { throw Object.assign(new Error('redirect'), { destination }); } };
+      if (name === 'next/navigation') return { useRouter: () => ({}), redirect: destination => { throw Object.assign(new Error('redirect'), { destination }); } };
       if (name === '@/lib/server/render-product') return { hasRenderWorker: () => false };
       if (name === '@/lib/server/safe-product-url') return {
         validateProductUrl: async url => { assert.equal(new URL(url).hostname, 'studio.test'); }, parseProductUrl: url => new URL(url),
@@ -72,6 +72,10 @@ function load(file) {
         },
       };
       if (name === '@/lib/storage') return { saveBufferToProjectStorage: async ({ projectId, storageId }) => ({ publicUrl: `/api/project-photos/${projectId}/${storageId}` }) };
+      if (name === '@/lib/server/org-portrait') return {
+        preparePortraitPhoto: async () => png, cutoutPortrait: async () => png, requirePortraitAdmin: async () => {},
+        storePortrait: async () => ({ url: 'https://studio.test/prepared-founder.png' }),
+      };
       if (name === '@/lib/posting/slug') return { makeSlug: (_title, id) => id };
       if (name === '@/lib/authz/access') return { assertProjectWrite: async (actor, id) => assert.equal((await db.project.findUniqueOrThrow({ where: { id } })).ownerId, actor) };
       if (name === '@/lib/interview/guided/store') return guidedStore;
@@ -149,7 +153,7 @@ const request = body => new Request('https://folio.test/api/onboarding/workspace
 const rowFor = id => db.importSession.findUnique({ where: { id } });
 
 (async () => {
-  const { workspaceCover, WorkspaceReadyPreview } = load('src/components/onboarding/WorkspaceReadyPreview.tsx');
+  const { workspaceCover, workspacePhotoCards, WorkspaceReadyPreview } = load('src/components/onboarding/WorkspaceReadyPreview.tsx');
   const portrait = { url: '/portrait', width: 1000, height: 1600 };
   const landscape = { url: '/landscape', width: 1800, height: 1200 };
   assert.equal(workspaceCover([{ photos: [portrait, landscape] }]).url, '/landscape');
@@ -174,9 +178,28 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   const photoLess = renderPreview({ projects: [{ ...previewProject, photos: [] }] });
   assert.match(photoLess, /Add photographs/);
   assert.doesNotMatch(photoLess, /mosaic-card-link/);
-  const longPreview = renderPreview({ projects: Array.from({ length: 7 }, (_, index) => ({ ...previewProject, id: String(index) })) });
-  assert.match(longPreview, /Show 3 more projects/);
-  assert.equal((longPreview.slice(0, longPreview.indexOf('Show 3 more projects')).match(/mosaic-card-link/g) || []).length, 4);
+  const unevenProjects = [20, 1, 3].map((count, i) => ({ ...previewProject, id: String(i),
+    photos: Array.from({ length: count }, (_, n) => ({ url: `/photo-${i}-${n}`, alt: 'Interior' })) }));
+  const cards = Array.from(workspacePhotoCards(unevenProjects, true));
+  assert.deepEqual(cards.slice(0, 6).map(c => c.projectId), ['0', '1', '2', '0', '2', '0']);
+  assert.equal(cards.length, 24);
+  assert.equal(new Set(cards.map(c => c.id)).size, cards.length);
+  const longPreview = renderPreview({ projects: unevenProjects, canEditProfile: true });
+  assert.match(longPreview, /Add studio portrait/);
+  const importedPortrait = { originalUrl: '/founders.png', cutoutUrl: null, treatment: 'original', position: 50, scale: 100, caption: '' };
+  const firstLook = renderPreview({ projects: [previewProject], canEditProfile: true, importedPortrait });
+  assert.match(firstLook, /Change portrait/);
+  assert.match(firstLook, /founders\.png/);
+  assert.doesNotMatch(renderPreview({ projects: [previewProject], importedPortrait, profile: { ...previewProfile,
+    appearance: { ...previewProfile.appearance, portrait: null } } }), /founders\.png/);
+  assert.doesNotMatch(preview, /Add studio portrait/);
+  assert.doesNotMatch(longPreview, /Show \d+ more projects/);
+  assert.equal((longPreview.match(/mosaic-card-link/g) || []).length, 12);
+  const titles = load('src/lib/workspace-import/project-title.ts');
+  const old = { title: 'IG WORKSHOP', url: 'https://www.igworkshop.com/residential/bay-harbor' };
+  const studio = { orgName: 'IG Workshop Interiors' };
+  assert.equal(titles.reviewProjectTitle(studio, old, old), 'Bay Harbor');
+  assert.equal(titles.reviewProjectTitle(studio, { title: 'Our Bay House' }, old), 'Our Bay House');
   assert.match(renderPreview({ projects: [{ ...previewProject, isPublic: true }] }), />Published</);
   const customPreview = renderPreview({ projects: [previewProject], profile: { ...previewProfile, cover: { url: '/chosen-cover' },
     appearance: { ...defaultOrgAppearance(), backgroundColor: '#123456', introduction: 'The saved studio introduction.',
@@ -215,6 +238,9 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   authUser = 'outsider'; assert.equal((await detailRoute.GET(request({}), { params: { id: a } })).status, 404); authUser = 'owner';
   await Promise.all([processor.processWorkspaceImports(), processor.processWorkspaceImports()]);
   let row = await rowFor(a); assert.equal(row.status, 'COMPLETED'); assert.equal(row.processingMeta.projects.length, 2);
+  assert.equal(row.processingMeta.projects.find(p => p.url.endsWith('/harbor')).title, 'Harbor House');
+  assert.equal(row.processingMeta.profile.portrait?.treatment, 'cutout', 'portrait is available before the ready notification');
+  assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).profileAppearance?.portrait, undefined);
   assert.match(row.processingMeta.profile.logo || '', /^data:image\/png;base64,/, 'logo is decoded into a safe review candidate');
   assert.equal(await db.project.count(), 2); assert.equal(await db.projectImage.count(), 2); assert.equal(sends.length, 1); assert.equal(generations, 0, 'website import must not generate questions before material review');
   assert.ok(row.processingMeta.projects.every(p => !p.preparation));

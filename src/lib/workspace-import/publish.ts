@@ -4,10 +4,13 @@ import { prisma } from '@/lib/prisma';
 import { canPublishFromOrg } from '@/lib/permissions';
 import { PortfolioPublishInput, portfolioReviewVersion, publishPortfolio } from '@/lib/publish/portfolio';
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
-import { ownedImport, WorkspaceImportError } from './store';
+import { importAccess, ownedImport, WorkspaceImportError } from './store';
+import { readOrgAppearance } from '@/lib/org-profile-appearance';
 import { IMPORT_LIMITS } from './types';
+import { reviewProjectTitle } from './project-title';
 
-export const ImportPublishInput = z.object({ projects: z.array(PortfolioPublishInput).min(1).max(IMPORT_LIMITS.projects) }).strict();
+export const ImportPublishInput = z.object({ projects: z.array(PortfolioPublishInput).min(1).max(IMPORT_LIMITS.projects),
+  reviewedPortrait: z.string().url().max(2048).optional() }).strict();
 async function access(userId: string, id: string) {
   const { run } = await ownedImport(userId, id);
   if (!['notify', 'complete', 'blocked'].includes(run.phase) || run.lease && Date.parse(run.lease.until) > Date.now())
@@ -24,10 +27,16 @@ export async function readImportPublication(userId: string, id: string) {
       post: { select: { status: true } }, images: { orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }],
         select: { id: true, url: true, name: true, inclusion: true, roomId: true, updatedAt: true } } },
   });
-  return { profileHref: `/org/${encodeURIComponent(run.orgId)}`, projects: projects.flatMap(project => {
+  let proposedPortrait: string | undefined;
+  if (run.profile?.portrait && (await importAccess(userId, run.orgId)).canEditProfile) {
+    const org = await prisma.organization.findUniqueOrThrow({ where: { id: run.orgId }, select: { profileAppearance: true } });
+    if (readOrgAppearance(org.profileAppearance).portrait === undefined) proposedPortrait = run.profile.portrait.originalUrl;
+  }
+  return { profileHref: `/org/${encodeURIComponent(run.orgId)}`, proposedPortrait, projects: projects.flatMap(project => {
     const photos = project.images.filter(image => image.url && !isDocumentImage(image.name));
     if (!photos.length) return [];
-    return [{ projectId: project.id, title: project.title, version: portfolioReviewVersion(project),
+    const title = reviewProjectTitle(run, project, run.projects.find(item => item.projectId === project.id));
+    return [{ projectId: project.id, title, version: portfolioReviewVersion(project),
       coverImageId: project.portfolioCoverImageId, photos: photos.map(({ id, url, name, inclusion }) => ({ id, url, name, inclusion })) }];
   }) };
 }
@@ -40,6 +49,8 @@ export async function publishImport(userId: string, id: string, raw: unknown) {
     throw new WorkspaceImportError('Choose projects from this import.', 403);
   const current = await prisma.project.findMany({ where: { id: { in: ids }, ownerId: userId, designerOrgId: run.orgId }, select: { id: true } });
   if (current.length !== ids.length) throw new WorkspaceImportError('Project ownership changed. Reload the review.', 409);
+  if (input.reviewedPortrait && input.reviewedPortrait !== run.profile?.portrait?.originalUrl)
+    throw new WorkspaceImportError('The studio portrait changed. Reload the review.', 409);
   // Each existing publisher rechecks permissions, locks its project and verifies the exact reviewed version.
   // Partial completion is explicit; a retry of an unchanged approval is idempotent.
   const results: Array<{ projectId: string; published: boolean; error?: string }> = [];
@@ -47,5 +58,20 @@ export async function publishImport(userId: string, id: string, raw: unknown) {
     try { await publishPortfolio(userId, project); results.push({ projectId: project.projectId, published: true }); }
     catch { results.push({ projectId: project.projectId, published: false, error: 'Could not publish this project. Reload its photographs and check your publishing access before retrying.' }); }
   }
-  return { results, profileHref: `/org/${encodeURIComponent(run.orgId)}` };
+  let portraitError: string | undefined;
+  const portrait = run.profile?.portrait;
+  if (input.reviewedPortrait && portrait && results.some(result => result.published)) {
+    try {
+      await prisma.$transaction(async tx => {
+        if (!(await importAccess(userId, run.orgId, tx)).canEditProfile) throw new Error('Profile access changed');
+        const org = await tx.organization.findUniqueOrThrow({ where: { id: run.orgId }, select: { profileAppearance: true, updatedAt: true } });
+        const appearance = readOrgAppearance(org.profileAppearance);
+        if (appearance.portrait !== undefined) return;
+        const saved = await tx.organization.updateMany({ where: { id: run.orgId, updatedAt: org.updatedAt },
+          data: { profileAppearance: { ...appearance, portrait } } });
+        if (!saved.count) throw new Error('Profile changed');
+      });
+    } catch { portraitError = 'Your projects were published. Open Change portrait on your cover to save the studio portrait.'; }
+  }
+  return { results, profileHref: `/org/${encodeURIComponent(run.orgId)}`, portraitError };
 }

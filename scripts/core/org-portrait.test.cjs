@@ -44,6 +44,14 @@ replace('@fal-ai/client', { createFalClient: () => ({ run: async (model, options
 global.fetch = async () => { throw new Error('Unexpected network request'); };
 const route = require(resolve('src/app/api/orgs/[orgId]/appearance/portraits/route.ts'));
 const { cutoutPortrait } = require(resolve('src/lib/server/org-portrait.ts'));
+let visionVerdict = 'NO';
+replace('@anthropic-ai/sdk', class {
+  messages = { create: async input => {
+    assert.equal(input.messages[0].content[0].source.media_type, 'image/jpeg');
+    return { content: [{ type: 'text', text: visionVerdict }] };
+  } };
+});
+const { prepareImportPortrait, portraitPriority } = require(resolve('src/lib/workspace-import/portrait.ts'));
 const { extractWebsitePage } = require(resolve('src/lib/workspace-import/extract.ts'));
 const { defaultOrgAppearance, readOrgAppearance, orgProfileAppearanceSchema } = require(resolve('src/lib/org-profile-appearance.ts'));
 const get = query => new NextRequest(`https://folio.test/api/portraits${query || ''}`);
@@ -77,6 +85,38 @@ test('anonymous, foreign and non-admin access cannot list, proxy, or prepare pho
     assert.equal((await route.POST(post({ importId, candidateId }), context)).status, 403);
   }
   assert.equal(downloads.length, 0); assert.equal(uploads.length, 0);
+});
+
+test('first import stores the cutout before review, can replay safely, and falls back to the original', async () => {
+  process.env.ANTHROPIC_ENABLED = 'false';
+  const first = await prepareImportPortrait('admin', orgId, importId, candidate);
+  assert.equal(first.treatment, 'cutout');
+  assert.equal(uploads.length, 2);
+  assert.deepEqual(await prepareImportPortrait('admin', orgId, importId, candidate), first);
+  providerFailure = true;
+  const fallback = await prepareImportPortrait('admin', orgId, importId, candidate);
+  assert.equal(fallback.originalUrl, first.originalUrl);
+  assert.equal(fallback.cutoutUrl, null);
+  assert.equal(fallback.treatment, 'original');
+  const unlabeled = { ...candidate, label: 'Studio photograph' };
+  assert.ok(portraitPriority(candidate) > portraitPriority(unlabeled));
+  const count = uploads.length;
+  assert.equal(await prepareImportPortrait('admin', orgId, importId, unlabeled), undefined);
+  assert.equal(uploads.length, count);
+});
+
+test('unlabelled team-page imagery is checked for a portrait before storage', async () => {
+  const env = { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY, ANTHROPIC_ENABLED: process.env.ANTHROPIC_ENABLED };
+  try {
+    process.env.ANTHROPIC_API_KEY = 'fixture'; process.env.ANTHROPIC_ENABLED = 'true';
+    visionVerdict = 'NO';
+    assert.equal(await prepareImportPortrait('admin', orgId, importId, candidate), undefined);
+    assert.equal(uploads.length, 0);
+    visionVerdict = 'YES';
+    assert.equal((await prepareImportPortrait('admin', orgId, importId, { ...candidate, label: 'Studio photograph' })).treatment, 'cutout');
+  } finally {
+    for (const [key, value] of Object.entries(env)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+  }
 });
 test('private suggestions do not publish or expose the remote image transport URL', async () => {
   const response = await route.GET(get(), context);

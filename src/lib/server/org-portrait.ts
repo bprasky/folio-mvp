@@ -1,5 +1,6 @@
 import 'server-only';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
+import { requestIdentity } from '@/lib/persistence/requestIdentity';
 import sharp from 'sharp';
 import { createFalClient } from '@fal-ai/client';
 import { prisma } from '@/lib/prisma';
@@ -23,7 +24,7 @@ export function ownedProfileImage(url: string, orgId: string) {
     const origin = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const prefix = `/storage/v1/object/public/user-avatars/org-profile/${encodeURIComponent(orgId)}/`;
     return !!origin && parsed.origin === new URL(origin).origin && !parsed.search && !parsed.hash &&
-      parsed.pathname.startsWith(prefix) && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\.(png|jpg)$/.test(parsed.pathname.slice(prefix.length));
+      parsed.pathname.startsWith(prefix) && /^[a-f0-9]{8}-[a-f0-9]{4}-[45][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\.(png|jpg)$/.test(parsed.pathname.slice(prefix.length));
   } catch { return false; }
 }
 
@@ -75,10 +76,12 @@ export async function cutoutPortrait(original: Buffer) {
     .joinChannel(alpha, { raw: { width: width!, height: height!, channels: 1 } }).png().toBuffer();
 }
 
-export async function storePortrait(orgId: string, buffer: Buffer) {
+export async function storePortrait(orgId: string, buffer: Buffer, importId?: string) {
   if (buffer.length > 8 * 1024 * 1024) throw new PortraitError('Choose a smaller portrait.', 413);
-  const path = `org-profile/${encodeURIComponent(orgId)}/${randomUUID()}.png`;
-  const { error } = await supabaseAdmin.storage.from('user-avatars').upload(path, buffer, { contentType: 'image/png', upsert: false });
+  // A worker can be interrupted after storage accepts the bytes but before its checkpoint.
+  const id = importId ? requestIdentity('import-portrait', [orgId, importId, createHash('sha256').update(buffer).digest('hex')]) : randomUUID();
+  const path = `org-profile/${encodeURIComponent(orgId)}/${id}.png`;
+  const { error } = await supabaseAdmin.storage.from('user-avatars').upload(path, buffer, { contentType: 'image/png', upsert: !!importId });
   if (error) throw new PortraitError('Could not save the portrait image. Please retry.', 500);
   return { path, url: supabaseAdmin.storage.from('user-avatars').getPublicUrl(path).data.publicUrl };
 }
