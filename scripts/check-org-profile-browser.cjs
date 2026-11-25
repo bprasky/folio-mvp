@@ -236,9 +236,13 @@ async function main() {
     assert.equal(saved.portrait.originalUrl, 'https://storage.test/upload.png');
     await go('/onboarding/workspace?import=import');
     await page.waitForFunction(() => document.body.textContent.includes('Change portrait'));
-    await button('Change portrait').click(); await button('Remove portrait').click(); await button('Save portrait').click();
+    await button('Change portrait').click();
+    await page.locator('::-p-aria(Remove portrait[role="button"])').click();
+    await page.waitForFunction(() => document.querySelector('[role=dialog]')?.textContent.includes('Portrait removed from the preview.'));
+    await page.locator('::-p-aria(Save portrait[role="button"])').click();
     await page.waitForFunction(() => !document.querySelector('[role=dialog]'));
     await go('/onboarding/workspace?import=import');
+    assert.equal(saved.portrait, null, 'explicit removal persists across reloads');
     assert.equal(await page.$('figure'), null);
     assert.ok(await page.evaluate(() => document.body.textContent.includes('Add studio portrait')));
     const card = '[data-testid="mosaic-card-link"]';

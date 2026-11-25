@@ -83,16 +83,6 @@ export default function PortraitControls({ orgId, importId, portrait, onChange, 
     <h3>The people behind the studio</h3>
     <p>Choose a founder or team photograph to place over your project. Check that the people shown belong to your studio.</p>
     <label>Upload a portrait<input type="file" disabled={busy} accept="image/jpeg,image/png,image/webp" onChange={event => { void upload(event.target.files?.[0]); event.target.value = ''; }} /></label>
-    {loading ? <p role="status">Looking for portrait suggestions…</p> : candidate ? <div>
-      <div className={styles.candidatePhoto}><SafeImage key={candidate.id} src={candidate.previewUrl} alt={candidate.label} fill unoptimized sizes="300px" /></div>
-      <div className={styles.inlineControls}>
-        <button type="button" disabled={busy || candidates.length < 2} className={styles.textButton} aria-label="Previous portrait suggestion" onClick={() => setIndex(value => (value + candidates.length - 1) % candidates.length)}>←</button>
-        <span>{index + 1} of {candidates.length}</span>
-        <button type="button" disabled={busy || candidates.length < 2} className={styles.textButton} aria-label="Next portrait suggestion" onClick={() => setIndex(value => (value + 1) % candidates.length)}>→</button>
-        <a href={candidate.sourceUrl} target="_blank" rel="noreferrer" className={styles.textButton}>View source</a>
-      </div>
-      <button type="button" className={styles.saveButton} disabled={busy} onClick={() => void choose(candidate)}>Use this photograph</button>
-    </div> : <p>No portrait suggestions were found.</p>}
     <fieldset disabled={busy}>
       {portrait && <div className="mt-4 space-y-4">
         <div className={styles.inlineControls}>
@@ -106,6 +96,16 @@ export default function PortraitControls({ orgId, importId, portrait, onChange, 
       </div>}
     </fieldset>
     {message && <p role="status" aria-live="polite">{message}</p>}
+    {loading ? <p role="status">Looking for portrait suggestions…</p> : candidate ? <div>
+      <div className={styles.candidatePhoto}><SafeImage key={candidate.id} src={candidate.previewUrl} alt={candidate.label} fill unoptimized sizes="300px" /></div>
+      <div className={styles.inlineControls}>
+        <button type="button" disabled={busy || candidates.length < 2} className={styles.textButton} aria-label="Previous portrait suggestion" onClick={() => setIndex(value => (value + candidates.length - 1) % candidates.length)}>←</button>
+        <span>{index + 1} of {candidates.length}</span>
+        <button type="button" disabled={busy || candidates.length < 2} className={styles.textButton} aria-label="Next portrait suggestion" onClick={() => setIndex(value => (value + 1) % candidates.length)}>→</button>
+        <a href={candidate.sourceUrl} target="_blank" rel="noreferrer" className={styles.textButton}>View source</a>
+      </div>
+      <button type="button" className={styles.saveButton} disabled={busy} onClick={() => void choose(candidate)}>Use this photograph</button>
+    </div> : <p>No portrait suggestions were found.</p>}
     {error && <p role="alert">{error} {!candidate && <button type="button" disabled={busy} className={styles.textButton} onClick={() => setRetry(value => value + 1)}>Reload suggestions</button>}</p>}
   </section>;
 }
