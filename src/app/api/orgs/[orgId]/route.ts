@@ -79,6 +79,13 @@ export async function GET(
       status: org.status,
       membersCanPublish: org.membersCanPublish,
       description: org.description,
+      tagline: org.tagline,
+      philosophy: org.philosophy,
+      location: org.location,
+      foundedYear: org.foundedYear,
+      specialties: org.specialties,
+      serviceRegions: org.serviceRegions,
+      profileSourcedFromInterview: org.profileSourcedFromInterview,
       website: org.website,
       logo: org.logo,
       address: org.address,
@@ -135,6 +142,12 @@ export async function PATCH(
     const updateData: any = {};
     if (body.membersCanPublish !== undefined) updateData.membersCanPublish = body.membersCanPublish;
     if (name !== undefined) updateData.name = name.trim();
+    if (body.serviceRegions !== undefined) {
+      if (!Array.isArray(body.serviceRegions) || body.serviceRegions.some((region: unknown) => typeof region !== 'string')) {
+        return NextResponse.json({ error: 'Enter each service area on its own line.' }, { status: 400 });
+      }
+      updateData.serviceRegions = Array.from(new Set(body.serviceRegions.map((region: string) => region.trim()).filter(Boolean)));
+    }
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (website !== undefined) updateData.website = website?.trim() || null;
     if (logo !== undefined) updateData.logo = logo?.trim() || null;
@@ -164,6 +177,14 @@ export async function PATCH(
       });
       if (!admin || !isOrgRole(admin.role) || !can(admin.role, 'change_member_roles')) throw new Error('Forbidden');
       if (name !== undefined) await assertFirmNameAvailable(tx, updateData.name, orgId);
+      const sourceFields = { description: 'description', tagline: 'tagline', philosophy: 'philosophy', location: 'city', foundedYear: 'foundingYear', specialties: 'specialties' };
+      const editedFields = Object.entries(sourceFields).filter(([field]) => field in updateData).map(([, sourceField]) => sourceField);
+      if (editedFields.length) {
+        await tx.profileFieldSource.updateMany({
+          where: { organizationId: orgId, fieldName: { in: editedFields }, source: 'INTERVIEW_EXTRACTED' },
+          data: { source: 'INTERVIEW_THEN_EDITED', manuallyEditedAt: new Date() },
+        });
+      }
       return tx.organization.update({
         where: { id: orgId },
         data: updateData,

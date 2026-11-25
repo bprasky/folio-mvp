@@ -230,7 +230,7 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   const original = input(); const [a, b] = await Promise.all([store.createWorkspaceImport('owner', original), store.createWorkspaceImport('owner', original)]);
   const profilePage = load('src/app/designer/profile/page.tsx').default;
   const redirectsTo = async destination => assert.rejects(profilePage(), error => error.destination === destination);
-  await redirectsTo(`/onboarding/workspace?import=${encodeURIComponent(a)}`);
+  await redirectsTo('/org/firm');
   authUser = null; await redirectsTo('/auth/signin?callbackUrl=%2Fdesigner%2Fprofile'); authUser = 'owner';
   assert.equal(a, b); assert.equal(await db.importSession.count(), 1);
   await assert.rejects(store.createWorkspaceImport('owner', { ...original, sections: ['business'] }), { status: 409 });
@@ -252,7 +252,7 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.equal(new URL(emailHref).searchParams.get('callbackUrl'), notifications[0].actionUrl, 'email and in-app notice return to the same preview');
   assert.match(sends[0].html, /Your next step/);
   await db.notification.update({ where: { id: notifications[0].id }, data: { read: true, readAt: new Date() } });
-  await redirectsTo(notifications[0].actionUrl);
+  await redirectsTo('/org/firm');
   for (const project of await db.project.findMany()) { assert.equal(project.status, 'draft'); assert.equal(project.timeline, null); assert.equal(project.isPublic, false); assert.equal(project.publishedAt, null); assert.equal(project.designerOrgId, 'firm'); }
   for (const post of await db.projectPost.findMany()) { assert.equal(post.status, 'DRAFT'); assert.equal(post.provenance.interview, undefined); }
   assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).description, null, 'business drafts stay private until reviewed');
@@ -324,7 +324,7 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.equal(await db.project.count(), 2, 'another run reuses source projects'); assert.equal((await db.project.findUnique({ where: { id: project.id } })).description, 'Changed by the owner');
   assert.equal((await rowFor(again)).processingMeta.projects.filter(p => p.preparation).length, 0);
   await pg.query('UPDATE runs SET "createdAt" = "createdAt" + interval \'1 minute\' WHERE id = $1', [again]);
-  await redirectsTo(`/onboarding/workspace?import=${encodeURIComponent(again)}`);
+  await redirectsTo('/org/firm');
   await db.organization.create({ data: { id: 'second', name: 'Second Studio', type: 'DESIGN_FIRM' } });
   await db.organizationUser.create({ data: { userId: 'owner', organizationId: 'second', role: 'OWNER', isActive: true } });
   await db.user.update({ where: { id: 'owner' }, data: { operatingAsOrgId: 'second' } });
@@ -338,7 +338,7 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   await redirectsTo('/org/second'); // Stale selected membership cannot reopen private content.
   await db.organizationUser.updateMany({ where: { userId: 'owner' }, data: { isActive: false } });
   await redirectsTo('/onboarding/workspace');
-  console.log('PASS Profile resumes pending/completed/read imports, respects selected firms, and excludes other owners/revoked memberships');
+  console.log('PASS Profile opens the selected studio, while notifications return directly to the saved import');
   console.log('PASS auth, explicit consent, active business permissions, request replay, JSONB worker claims, separate private drafts, review and edit preservation');
 
   await fixture(); failedPage = '/work/court'; const partial = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();

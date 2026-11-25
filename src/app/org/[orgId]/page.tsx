@@ -1,5 +1,6 @@
 import { getOrgProfileFeed } from '@/lib/profile/org-feed';
 import { StudioProfileTools, type ProfileNextStep } from '@/components/org-profile/StudioProfileTools';
+import type { StudioFeedSetup } from '@/components/org-profile/OrgProfileFeed';
 import { WORKSPACE_IMPORT_KIND, isWorkspaceImport } from '@/lib/workspace-import/types';
 import { profileMetadata, identityStructuredData, serializeJsonLd } from '@/lib/seo/public';
 import { Suspense } from 'react';
@@ -210,6 +211,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   const projectCount = profileData.projectCount;
   const isVendorOrg = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'].includes(org.type);
   let next: ProfileNextStep | null = null;
+  let feedSetup: StudioFeedSetup | undefined;
   if (!isVendorOrg && canCreate && !projectCount && session?.user?.id) {
     const userId = session.user.id;
     const [savedImport, draft] = await Promise.all([
@@ -217,7 +219,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         where: { userId, AND: [
           { processingMeta: { path: ['kind'], equals: WORKSPACE_IMPORT_KIND } },
           { processingMeta: { path: ['orgId'], equals: org.id } },
-          { processingMeta: { path: ['sections'], array_contains: ['projects'] } },
         ] }, orderBy: { createdAt: 'desc' }, select: { id: true, processingMeta: true },
       }),
       prisma.project.findFirst({
@@ -226,20 +227,26 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       }),
     ]);
     const run = savedImport && isWorkspaceImport(savedImport.processingMeta) ? savedImport.processingMeta : null;
-    const resumeImport = run && (run.phase !== 'complete' || run.projects.some(project => project.projectId && project.projectId === draft?.id));
-    if (savedImport && resumeImport) {
+    feedSetup = {
+      importHref: savedImport && run
+        ? '/onboarding/workspace?import=' + encodeURIComponent(savedImport.id)
+        : '/onboarding/workspace?' + new URLSearchParams({ orgId: org.id, new: '1', returnTo: '/org/' + org.id + '?tab=feed#profile-content' }),
+      importLabel: run ? (run.phase === 'complete' ? 'Review website import' : 'Continue website import') : 'Import from your website',
+      draft,
+    };
+    if (savedImport && run) {
       next = { title: 'Review your website import', description: 'Choose which projects and photographs appear on your studio profile.',
-        href: '/onboarding/workspace?import=' + savedImport.id, action: 'Open import' };
+        href: feedSetup.importHref, action: 'Open import' };
     } else if (draft) {
       next = { title: 'Continue ' + draft.title, description: 'Choose the photographs for your first public project.',
         href: '/project/' + draft.id, action: 'Open project' };
     } else {
       next = { title: 'Add your first project', description: 'Bring work over from your website or start a project with your own photographs.',
-        href: '/onboarding/workspace?orgId=' + org.id + '&new=1&returnTo=%2Fprojects%2Fnew', action: 'Get started' };
+        href: '/org/' + org.id + '?tab=feed#profile-content', action: 'Get started' };
     }
   } else if (!isVendorOrg && isAdmin && !org.description?.trim()) {
     next = { title: 'Introduce your studio', description: 'Give visitors a short introduction to your practice.',
-      href: '/org/' + org.id + '/edit', action: 'Add introduction' };
+      href: '/org/' + org.id + '?tab=about#profile-content', action: 'Add introduction' };
   }
 
   // Get pinned items (with fallback for missing fields)
@@ -355,9 +362,8 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     // Graceful fallback
   }
 
-  // Default to About tab when no published projects (empty profile is a dead end on Feed)
   const initialItems = await getOrgProfileFeed(resolvedParams.orgId, resolvedSearchParams.filter || 'all', resolvedSearchParams.sort || 'featured');
-  const defaultTab = projectCount === 0 && initialItems.length === 0 ? 'about' : 'feed';
+  const defaultTab = !feedSetup && projectCount === 0 && initialItems.length === 0 ? 'about' : 'feed';
   const activeTab = resolvedSearchParams.tab || defaultTab;
   const activeFilter = resolvedSearchParams.filter || 'all';
   const activeSort = resolvedSearchParams.sort || 'featured';
@@ -417,6 +423,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
           <Suspense fallback={<FeedSkeleton />}>
             <OrgProfileFeed
               initialItems={initialItems}
+              setup={feedSetup}
               orgId={resolvedParams.orgId}
               initialFilter={activeFilter}
               initialSort={activeSort}
@@ -444,6 +451,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
           <OrgAboutTab
             org={orgData}
             team={teamData}
+            canEditBio={!isVendorOrg && isAdmin}
             processPhases={processPhases.map((p: any) => ({
               id: p.id,
               name: p.name,
@@ -464,6 +472,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         {activeTab === 'contact' && (
           <OrgContactTab
             org={orgData}
+            canEdit={!isVendorOrg && isAdmin}
             isMember={isMember}
             currentUser={session?.user ? { id: session.user.id, name: session.user.name || '' } : null}
           />

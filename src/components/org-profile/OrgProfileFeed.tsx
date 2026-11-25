@@ -1,6 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import styles from '@/components/ui/WorkflowForms.module.css';
+import { workflowRequest } from '@/lib/client/workflowRequest';
 import FeedFilters from './FeedFilters';
 import AddRecognitionModal from './AddRecognitionModal';
 import FeedLayoutSystem from './feed-layout/FeedLayoutSystem';
@@ -14,7 +19,14 @@ interface FeedItem {
   engagement?: number;
 }
 
+export type StudioFeedSetup = {
+  importHref: string;
+  importLabel: string;
+  draft: { id: string; title: string | null } | null;
+};
+
 interface OrgProfileFeedProps {
+  setup?: StudioFeedSetup;
   initialItems?: FeedItem[];
   orgId: string;
   initialFilter: string;
@@ -26,6 +38,7 @@ interface OrgProfileFeedProps {
 
 export default function OrgProfileFeed({
   initialItems,
+  setup,
   orgId,
   initialFilter,
   initialSort,
@@ -74,13 +87,10 @@ export default function OrgProfileFeed({
     setSort(initialSort);
   }, [initialFilter, initialSort]);
 
-  if (loading) {
-    return <LoadingSkeleton projectCount={projectCount} />;
-  }
-
   return (
     <div>
-      {(items.length > 0 || filter !== 'all' || error) && <FeedFilters
+      {setup && filter === 'all' && <FirstProjectActions orgId={orgId} setup={setup} />}
+      {!loading && (items.length > 0 || filter !== 'all' || error) && <FeedFilters
         activeFilter={filter}
         activeSort={sort}
         orgId={orgId}
@@ -88,7 +98,8 @@ export default function OrgProfileFeed({
         onAddRecognition={() => setRecognitionModalOpen(true)}
       />}
 
-      {error ? <div className="py-12 text-center"><p role="alert" className="folio-body">{error}</p><button className="mt-3 min-h-11 px-4 folio-ui underline" onClick={() => setAttempt(value => value + 1)}>Try again</button></div> : items.length === 0 ? (
+      {loading ? <LoadingSkeleton projectCount={projectCount} /> : error ? <div className="py-12 text-center"><p role="alert" className="folio-body">{error}</p><button className="mt-3 min-h-11 px-4 folio-ui underline" onClick={() => setAttempt(value => value + 1)}>Try again</button></div> : items.length === 0 ? (
+          !(setup && filter === 'all') &&
           <div className="text-center py-16" style={{ color: 'var(--org-page-muted, var(--folio-text-secondary))' }}>
             <p>{filter === 'all' ? 'No content yet' : 'No entries in this section yet'}</p>
             <p className="text-sm mt-2">
@@ -112,6 +123,42 @@ export default function OrgProfileFeed({
 
     </div>
   );
+}
+
+function FirstProjectActions({ orgId, setup }: { orgId: string; setup: StudioFeedSetup }) {
+  const { update } = useSession();
+  const router = useRouter();
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState('');
+
+  async function openUpload() {
+    setOpening(true);
+    setError('');
+    try {
+      const response = await workflowRequest('/api/user/workspace-context', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operatingAsOrgId: orgId }),
+      });
+      if (!response.ok) throw new Error('Could not open this studio workspace. Try again.');
+      const session = await update();
+      if (session?.user?.operatingAsOrgId !== orgId) throw new Error('Could not switch to this studio. Try again.');
+      router.push('/projects/new');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not open project upload. Try again.');
+      setOpening(false);
+    }
+  }
+
+  return <section className="mx-auto max-w-3xl px-5 py-8 sm:py-12" aria-labelledby="first-project-title">
+    <h2 id="first-project-title" className="folio-h2">Add your first project</h2>
+    <p className="folio-body mt-3 mb-6">Bring work over from your studio website or start with your own photographs.</p>
+    <div className={styles.actions}>
+      <Link className={styles.primary} href={setup.importHref}>{setup.importLabel}</Link>
+      <button type="button" className={styles.secondary} disabled={opening} onClick={openUpload}>{opening ? 'Opening workspace…' : 'Upload a project'}</button>
+    </div>
+    {setup.draft && <Link className="mt-3 inline-flex min-h-11 items-center underline underline-offset-4" href={'/project/' + setup.draft.id}>Continue draft · {setup.draft.title || 'Untitled project'}</Link>}
+    {error && <p role="alert" className="mt-3 folio-body">{error}</p>}
+  </section>;
 }
 
 function LoadingSkeleton({ projectCount }: { projectCount: number }) {

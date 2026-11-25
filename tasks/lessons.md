@@ -1,4 +1,8 @@
 ## 2026-11-18 - Studio profile hierarchy
+## Studio profile recovery after leaving import
+
+Test onboarding by leaving before submitting a website and again after a saved import exists. From the new studio's public-facing profile, an authorized user should be able to resume or upload a project, write a bio, and edit contact details directly from the relevant tab.
+
 
 Give a studio with unfinished work one relevant publishing action. Keep team and coverage administration in the owner's controls, and place import decisions before the project gallery. Optional contributions should never count against a studio's readiness.
 

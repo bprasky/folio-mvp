@@ -1,6 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import styles from '@/components/ui/WorkflowForms.module.css';
 import InquiryComposer from '@/components/messaging/InquiryComposer';
 
 interface OrgContactTabProps {
@@ -13,15 +15,22 @@ interface OrgContactTabProps {
     serviceRegions?: string[];
   };
   isMember: boolean;
+  canEdit?: boolean;
   currentUser: { id: string; name: string } | null;
 }
 
-export default function OrgContactTab({ org, isMember, currentUser }: OrgContactTabProps) {
+export default function OrgContactTab({ org, isMember, currentUser, canEdit = false }: OrgContactTabProps) {
   const router = useRouter();
   const hasInfo = org.website || org.location || org.address || (org.serviceRegions && org.serviceRegions.length > 0);
 
   return (
     <div className="max-w-lg mx-auto">
+      {canEdit && <section className="mb-8" aria-label="Studio contact details">
+        {!hasInfo && <h2 className="folio-h2 mb-5">How can clients reach you?</h2>}
+        <Link href={'/org/' + org.id + '/edit?section=contact'} className={hasInfo ? styles.secondary : styles.primary}>
+          {hasInfo ? 'Edit contact details' : 'Add contact details'}
+        </Link>
+      </section>}
       {hasInfo && (
         <>
           <h3 className="text-lg font-semibold mb-6" style={{ color: 'var(--folio-text-primary)', fontFamily: 'var(--font-headline), Georgia, serif' }}>
@@ -35,7 +44,7 @@ export default function OrgContactTab({ org, isMember, currentUser }: OrgContact
                   Location
                 </div>
                 <div className="text-[var(--type-body)]" style={{ color: 'var(--folio-text-primary)' }}>
-                  {org.address || org.location}
+                  {[org.location, org.address !== org.location && org.address].filter(Boolean).join(' · ')}
                 </div>
               </div>
             )}

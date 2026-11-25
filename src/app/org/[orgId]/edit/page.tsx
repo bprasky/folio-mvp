@@ -1,17 +1,17 @@
 'use client';
 
 import controls from '@/components/org-profile/ProfileControls.module.css';
+import forms from '@/components/ui/WorkflowForms.module.css';
+import { externalIdentityUrl } from '@/lib/seo/public';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { FaCamera } from 'react-icons/fa';
 import { Mic, RefreshCw } from 'lucide-react';
 import { ProfileField, getFieldDisplayState, type FieldDisplayState } from '@/components/profile/ProfileField';
 
-// Org profile editing lives here, separate from /settings (which is for
-// member ops). Only OWNER/ADMIN reach this page; the "Edit Profile" button
-// on the org hero is the canonical entry point.
+// The tab-specific editors share the studio profile's save and permission checks.
 interface FieldSourceMap {
   [fieldName: string]: {
     source: string;
@@ -22,12 +22,23 @@ interface FieldSourceMap {
 
 export default function OrgEditPage() {
   const params = useParams();
-  const router = useRouter();
-  const { data: session } = useSession();
+  const section = useSearchParams().get('section');
+  const { data: session, status } = useSession();
   const orgId = params.orgId as string;
+  if (status === 'loading') return <p className="p-8 folio-body" role="status">Loading studio…</p>;
+  return <StudioEditor key={JSON.stringify([orgId, session?.user?.id, section])} orgId={orgId} userId={session?.user?.id} section={section} />;
+}
+
+function StudioEditor({ orgId, userId, section }: { orgId: string; userId?: string; section: string | null }) {
+  const router = useRouter();
+  const focused = section === 'about' || section === 'contact';
+  const profileHref = '/org/' + orgId + '?tab=' + (section === 'contact' ? 'contact' : 'about') + '#profile-content';
 
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -43,6 +54,8 @@ export default function OrgEditPage() {
     philosophy: '',
     location: '',
     website: '',
+    address: '',
+    serviceRegions: '',
     foundedYear: '',
     specialties: [] as string[],
   });
@@ -51,8 +64,13 @@ export default function OrgEditPage() {
 
   useEffect(() => {
     async function loadOrg() {
+      setLoading(true);
+      setLoadFailed(false);
       try {
         const res = await fetch(`/api/orgs/${orgId}`);
+        if (!res.ok && res.status !== 401 && res.status !== 403 && res.status !== 404) {
+          throw new Error('Could not load this studio.');
+        }
         if (res.ok) {
           const data = await res.json();
           setForm({
@@ -60,8 +78,10 @@ export default function OrgEditPage() {
             description: data.description || '',
             tagline: data.tagline || '',
             philosophy: data.philosophy || '',
-            location: data.location || data.address || '',
+            location: data.location || '',
             website: data.website || '',
+            address: data.address || '',
+            serviceRegions: (data.serviceRegions || []).join('\n'),
             foundedYear: data.foundedYear ? String(data.foundedYear) : '',
             specialties: Array.isArray(data.specialties) ? data.specialties : [],
           });
@@ -69,14 +89,12 @@ export default function OrgEditPage() {
           setProfileSourced(!!data.profileSourcedFromInterview);
 
           const userMember = data.members?.find(
-            (m: any) => m.userId === session?.user?.id
+            (m: { userId: string }) => m.userId === userId
           );
           const authorized = !!userMember && ['OWNER', 'ADMIN'].includes(userMember.role);
           setIsAuthorized(authorized);
 
-          // Interview gate: profile-editing depends on interview-sourced fields.
-          // Hard-redirect to interview if it hasn't run yet. /settings (member
-          // ops) doesn't have this gate anymore — only /edit does.
+          if (focused || !authorized) return;
           const bioRes = await fetch(`/api/orgs/${orgId}/bio-interview`);
           if (bioRes.ok) {
             const bioData = await bioRes.json();
@@ -85,11 +103,6 @@ export default function OrgEditPage() {
               (bioData.interview.interviewFormat === 'conversational' && !!bioData.interview.conversationalAnswers)
             );
             setInterviewCompleted(hasInterview);
-
-            if (!hasInterview && authorized) {
-              router.replace(`/org/${orgId}/settings/about-interview?returnTo=profile`);
-              return;
-            }
           }
 
           const sourceRes = await fetch(`/api/profile/field-source?orgId=${orgId}`);
@@ -100,14 +113,17 @@ export default function OrgEditPage() {
         }
       } catch (error) {
         console.error('Failed to load org:', error);
+        setLoadFailed(true);
       } finally {
         setLoading(false);
       }
     }
-    if (session?.user) {
+    if (userId) {
       loadOrg();
+    } else {
+      setLoading(false);
     }
-  }, [orgId, session, router]);
+  }, [orgId, userId, focused, attempt]);
 
   const handleFieldChange = useCallback((fieldName: string, value: string) => {
     setForm((f) => ({ ...f, [fieldName]: value }));
@@ -115,34 +131,32 @@ export default function OrgEditPage() {
   }, []);
 
   const handleSave = async () => {
+    setError('');
+    if (editedFields.has('website') && form.website.trim() && !externalIdentityUrl(form.website.trim())) {
+      setError('Enter a valid studio website.');
+      return;
+    }
+    const changes = Object.fromEntries(Object.entries(form).filter(([name]) => editedFields.has(name)));
+    if (editedFields.has('serviceRegions')) {
+      changes.serviceRegions = form.serviceRegions.split('\n').map(region => region.trim()).filter(Boolean);
+    }
     try {
       setSaving(true);
       const res = await fetch(`/api/orgs/${orgId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(changes),
       });
 
       if (res.ok) {
-        for (const fieldName of Array.from(editedFields)) {
-          const existingSource = fieldSources[fieldName];
-          if (existingSource?.source === 'INTERVIEW_EXTRACTED') {
-            await fetch('/api/profile/field-source', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                organizationId: orgId,
-                fieldName,
-                source: 'INTERVIEW_THEN_EDITED',
-              }),
-            });
-          }
-        }
-
-        router.push(`/org/${orgId}?tab=about`);
+        router.push(profileHref);
+        router.refresh();
+      } else {
+        const result = await res.json().catch(() => null);
+        setError(result?.error || 'Could not save your changes. Try again.');
       }
     } catch (error) {
-      console.error('Failed to save:', error);
+      setError('Could not confirm the save. Your edits are still here.');
     } finally {
       setSaving(false);
     }
@@ -190,7 +204,8 @@ export default function OrgEditPage() {
   };
 
   const getDisplayState = (fieldName: string, value: string | undefined): FieldDisplayState => {
-    return getFieldDisplayState(value, fieldSources[fieldName], interviewCompleted);
+    const state = getFieldDisplayState(value, fieldSources[fieldName], interviewCompleted);
+    return state === 'empty-no-interview' ? 'manually-entered' : state;
   };
 
   const initials = form.name
@@ -207,6 +222,11 @@ export default function OrgEditPage() {
       </div>
     );
   }
+
+  if (loadFailed) return <main className="mx-auto max-w-lg px-5 py-12">
+    <p role="alert" className="folio-body mb-4">Could not load your studio details.</p>
+    <button type="button" className={forms.secondary} onClick={() => setAttempt(value => value + 1)}>Try again</button>
+  </main>;
 
   if (!isAuthorized) {
     return (
@@ -226,6 +246,39 @@ export default function OrgEditPage() {
         </div>
       </div>
     );
+  }
+
+  if (focused) {
+    const isBio = section === 'about';
+    return <main className="mx-auto max-w-2xl px-5 py-12">
+      <h1 className={forms.title}>{isBio ? 'Your studio bio' : 'Studio contact details'}</h1>
+      <p className={forms.lede}>{isBio ? 'Introduce your studio in your own words.' : 'Choose the details clients can see on your profile.'}</p>
+      <form className="mt-8" onSubmit={event => { event.preventDefault(); void handleSave(); }}>
+        <fieldset className={forms.stack} disabled={saving}>
+          {isBio ? <label className={forms.label}>Studio bio
+            <textarea className={forms.field} rows={8} value={form.description} onChange={event => handleFieldChange('description', event.target.value)} />
+          </label> : <>
+            <label className={forms.label}>Studio website
+              <input className={forms.field} inputMode="url" placeholder="studio.com" value={form.website} onChange={event => handleFieldChange('website', event.target.value)} />
+            </label>
+            <label className={forms.label}>Based in
+              <input className={forms.field} placeholder="City, state" value={form.location} onChange={event => handleFieldChange('location', event.target.value)} />
+            </label>
+            <label className={forms.label}>Studio address
+              <input className={forms.field} value={form.address} onChange={event => handleFieldChange('address', event.target.value)} />
+            </label>
+            <label className={forms.label}>Service areas (one per line)
+              <textarea className={forms.field} rows={3} value={form.serviceRegions} onChange={event => handleFieldChange('serviceRegions', event.target.value)} />
+            </label>
+          </>}
+          {error && <p role="alert" className="folio-body">{error}</p>}
+          <div className={forms.actions}>
+            <button type="submit" className={forms.primary} disabled={!editedFields.size}>{saving ? 'Saving…' : isBio ? 'Save bio' : 'Save contact details'}</button>
+            <button type="button" className={forms.secondary} onClick={() => router.push(profileHref)}>Cancel</button>
+          </div>
+        </fieldset>
+      </form>
+    </main>;
   }
 
   return (
@@ -426,6 +479,7 @@ export default function OrgEditPage() {
           </div>
         </div>
 
+        {error && <p role="alert" className="mt-4 folio-body">{error}</p>}
         <div className="flex justify-end gap-3 mt-10 pt-6 border-t" style={{ borderColor: 'var(--folio-border-subtle)' }}>
           <button
             onClick={() => router.push(`/org/${orgId}`)}

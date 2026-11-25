@@ -154,8 +154,12 @@ export function isOrgRole(value: unknown): value is OrgRole {
   );
 }
 
+export function isProjectFirm(orgType: string): boolean {
+  return ['DESIGN_FIRM', 'ARCHITECTURE_FIRM', 'CONTRACTOR'].includes(orgType);
+}
+
 export function canCreateFirmProject(role: OrgRole | null | undefined, orgType: string): boolean {
-  return ['DESIGN_FIRM', 'ARCHITECTURE_FIRM', 'CONTRACTOR'].includes(orgType) && can(role, 'create_and_edit_projects');
+  return isProjectFirm(orgType) && can(role, 'create_and_edit_projects');
 }
 
 /** Evaluate posting access with the firm and active membership already loaded. */

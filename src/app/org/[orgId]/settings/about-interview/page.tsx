@@ -48,7 +48,12 @@ export default function OrgAboutInterviewPage() {
 
   const [orgName, setOrgName] = useState('');
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState<Step>('choose-path');
+  const [step, setStep] = useState<Step>(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'import') return 'import-bio';
+    if (mode === 'interview') return 'interview';
+    return 'choose-path';
+  });
   const [error, setError] = useState<string | null>(null);
 
   // Bio import state
@@ -196,6 +201,23 @@ export default function OrgAboutInterviewPage() {
     }
   };
 
+  const saveWriteUp = async () => {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/orgs/${orgId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: bioText.trim() }),
+      });
+      if (!response.ok) throw new Error('Could not save your studio bio. Try again.');
+      router.push(`/org/${orgId}?tab=about#profile-content`);
+      router.refresh();
+    } catch {
+      setError('Could not confirm the save. Your write-up is still here.');
+      setIsSubmitting(false);
+    }
+  };
+
   const handleCoverageContinue = async () => {
     if (activeQuestions.length === 0) {
       // All questions covered — skip to extraction
@@ -262,7 +284,7 @@ export default function OrgAboutInterviewPage() {
     } catch (err) {
       console.error('Interview submission error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setStep('interview');
+      setStep(activeQuestions.length ? 'interview' : 'coverage');
     } finally {
       setIsSubmitting(false);
     }
@@ -272,7 +294,8 @@ export default function OrgAboutInterviewPage() {
     if (returnTo === 'profile') {
       router.push(`/org/${orgId}/settings`);
     } else {
-      router.push(`/org/${orgId}?tab=about`);
+      router.push(`/org/${orgId}?tab=about#profile-content`);
+      router.refresh();
     }
   };
 
@@ -348,7 +371,7 @@ export default function OrgAboutInterviewPage() {
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: 'var(--folio-border-subtle)' }}>
           <button
-            onClick={() => setStep('choose-path')}
+            onClick={() => searchParams.get('mode') === 'import' ? router.push(`/org/${orgId}?tab=about#profile-content`) : setStep('choose-path')}
             className="p-1 rounded-full transition-colors hover:underline"
             style={{ color: 'var(--folio-text-secondary)' }}
             aria-label="Back"
@@ -376,7 +399,7 @@ export default function OrgAboutInterviewPage() {
               className="text-sm text-center mb-8"
               style={{ color: 'var(--folio-text-secondary)' }}
             >
-              We&apos;ll analyze what you already have and only ask about what&apos;s missing.
+              Bring in a link or paste a previous write-up. Review the text, then save it as your bio or build on it in an interview.
             </p>
 
             {error && (
@@ -397,6 +420,8 @@ export default function OrgAboutInterviewPage() {
               <div className="flex gap-2">
                 <input
                   type="url"
+                  aria-label="Write-up URL"
+                  disabled={isSubmitting || fetchingUrl}
                   value={bioUrl}
                   onChange={(e) => setBioUrl(e.target.value)}
                   placeholder="Your website, Houzz profile, LinkedIn, etc."
@@ -409,7 +434,7 @@ export default function OrgAboutInterviewPage() {
                 />
                 <button
                   onClick={handleFetchUrl}
-                  disabled={fetchingUrl || !bioUrl.trim()}
+                  disabled={isSubmitting || fetchingUrl || !bioUrl.trim()}
                   className={`px-4 py-2.5 text-sm rounded-xl transition-all ${controls.secondary}`}
                 >
                   {fetchingUrl ? (
@@ -432,6 +457,8 @@ export default function OrgAboutInterviewPage() {
 
             {/* Text input */}
             <textarea
+              aria-label="Studio write-up"
+              disabled={fetchingUrl || isSubmitting}
               value={bioText}
               onChange={(e) => setBioText(e.target.value)}
               placeholder="Paste your studio's about text here..."
@@ -443,14 +470,18 @@ export default function OrgAboutInterviewPage() {
                 }}
             />
 
-            <div className="flex justify-center mt-8">
+            <div className="flex flex-wrap justify-center gap-3 mt-8">
+              <button type="button" onClick={saveWriteUp} disabled={fetchingUrl || isSubmitting || !bioText.trim()}
+                className={`px-6 py-3 rounded-full text-sm font-medium ${controls.primary}`}>
+                {isSubmitting ? 'Saving…' : 'Save as studio bio'}
+              </button>
               <button
                 onClick={handleAnalyzeBio}
-                disabled={!bioText.trim()}
-                className={`flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all ${controls.primary}`}
+                disabled={fetchingUrl || isSubmitting || !bioText.trim()}
+                className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all ${controls.secondary}`}
               >
                 <FileText className="w-4 h-4" />
-                Analyze my bio
+                Build on this in an interview
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
