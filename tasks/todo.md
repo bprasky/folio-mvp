@@ -1,3 +1,9 @@
+# Studio profile after leaving import
+
+- [x] Open the correct import or first project upload from the studio Feed.
+- [x] Make the three bio paths and the contact editor available from their tabs.
+- [x] Exercise import recovery, scoped edits, save retry, and visitor visibility with isolated fixtures.
+
 # Studio deletion by an active owner or admin
 
 - [x] Review role verification, studio dependencies, project deletion guards and repeat-request recovery.

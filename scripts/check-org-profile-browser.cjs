@@ -16,6 +16,8 @@ const org = { id: 'firm', name: 'Fixture Design Studio', type: 'DESIGN_FIRM', lo
 const initial = { version: 1, backgroundColor: null, introduction: null, cover: { kind: 'auto' }, coverPosition: { x: 50, y: 50 }, identity: { mode: 'logo', url: null }, facts: null };
 const projects = Array.from({ length: 4 }, (_, i) => ({ id: `project-${i}`, title: `Published project ${i + 1}`, images: [{ id: `00000000-0000-4000-8000-00000000000${i}`, url: '/photo.png' }] }));
 let saved = structuredClone(initial), role = 'ADMIN', failSave = false, saveCount = 0;
+let testingSetup = false, lastProfilePatch, workspaceId;
+const newStudio = { ...org, location: null, description: null, website: null, address: null };
 const source = `
 import React from 'react'; import {createRoot} from 'react-dom/client';
 import Settings from './src/app/org/[orgId]/settings/page';
@@ -24,6 +26,9 @@ import {StudioProfileTools} from './src/components/org-profile/StudioProfileTool
 import Tabs from './src/components/org-profile/OrgProfileTabs';
 import Feed from './src/components/org-profile/OrgProfileFeed';
 import Contact from './src/components/org-profile/OrgContactTab';
+import {OrgAboutTab} from './src/components/org-onboarding/OrgAboutTab';
+import Editor from './src/app/org/[orgId]/edit/page';
+import Interview from './src/app/org/[orgId]/settings/about-interview/page';
 import {WorkspaceReadyPreview} from './src/components/onboarding/WorkspaceReadyPreview';
 import {profilePageStyle,resolveProfileCover} from './src/lib/org-profile-appearance';
 import styles from './src/components/org-profile/OrgProfileAppearance.module.css';
@@ -31,6 +36,15 @@ const d=window.fixture;
 const tab=new URLSearchParams(location.search).get('tab')||'feed';
 const member=Boolean(d.role);
 function App(){
+if(location.pathname.endsWith('/edit')) return <Editor/>;
+if(location.pathname.endsWith('/about-interview')) return <Interview/>;
+if(d.testingSetup && location.pathname === '/org/firm') {
+  const admin = ['ADMIN','OWNER'].includes(d.role);
+  if(tab === 'about') return <OrgAboutTab org={d.org} team={[]} isOwner={d.role === 'OWNER'} canEditBio={admin}/>;
+  if(tab === 'contact') return <Contact org={d.org} isMember={member} canEdit={admin} currentUser={member ? {id:'admin',name:'Admin'} : null}/>;
+  return <Feed orgId="firm" initialItems={[]} initialFilter="all" initialSort="featured"
+    setup={admin ? {importLabel:'Continue website import', importHref:'/onboarding/workspace?import=saved', draft:null} : undefined}/>;
+}
 if(location.pathname === '/onboarding/workspace') {
   const imported = [20, 3, 2].map((count, i) => ({id:'draft-'+i, title:'Draft '+i, isPublic:false, description:null,
     photos:Array.from({length:count}, (_, j) => ({url:'/photo.png', alt:'Room '+j}))}));
@@ -50,7 +64,7 @@ async function build() {
     plugins: [{ name: 'framework-fixture', setup(b) {
       b.onResolve({ filter: /^(next-auth\/react|next\/navigation|next\/link|next\/image)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
       b.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents:
-        args.path === 'next-auth/react' ? `const data=window.fixture.role?{user:{id:'admin'}}:null;export const useSession=()=>({data,status:data?'authenticated':'unauthenticated'});` :
+        args.path === 'next-auth/react' ? `const data=window.fixture.role?{user:{id:'admin'}}:null;export const useSession=()=>({data,status:data?'authenticated':'unauthenticated',update:async()=>({user:{id:'admin',operatingAsOrgId:'firm'}})});` :
         args.path === 'next/navigation' ? `const router={push:u=>location.assign(u),refresh:()=>{}};export const useParams=()=>({orgId:'firm'});export const useRouter=()=>router;export const usePathname=()=>location.pathname;export const useSearchParams=()=>new URLSearchParams(location.search);` :
         args.path === 'next/link' ? `import React from 'react';export default ({href,children,prefetch,scroll,...props})=><a href={href} {...props}>{children}</a>;` :
         `import React from 'react';export default React.forwardRef(({fill,priority,unoptimized,quality,loader,style,...props},ref)=><img ref={ref} {...props} style={fill?{position:'absolute',inset:0,width:'100%',height:'100%',...style}:style}/>);`
@@ -100,11 +114,24 @@ async function main() {
       }
       return json(res, { org, appearance: saved, projects, projectCount: 4 });
     }
-    if (pathname === '/api/orgs/firm') return json(res, { name: org.name, membersCanPublish: true, members: [{ userId: 'admin', role }] });
+    if (testingSetup && pathname === '/api/user/workspace-context' && req.method === 'POST') {
+      const chunks = []; for await (const chunk of req) chunks.push(chunk);
+      workspaceId = JSON.parse(Buffer.concat(chunks)).operatingAsOrgId;
+      return json(res, { success: true });
+    }
+    if (testingSetup && pathname === '/api/orgs/firm' && req.method === 'PATCH') {
+      const chunks = []; for await (const chunk of req) chunks.push(chunk);
+      if (failSave) return json(res, { error: 'Could not save. Try again.' }, 503);
+      lastProfilePatch = JSON.parse(Buffer.concat(chunks)); Object.assign(newStudio, lastProfilePatch);
+      return json(res, { org: newStudio });
+    }
+    if (pathname === '/api/orgs/firm') return json(res, { ...(testingSetup ? newStudio : org), membersCanPublish: true, members: [{ userId: 'admin', role }] });
+    if (testingSetup && pathname === '/api/profile/fetch-bio-url') return json(res, { text: 'A previously published studio introduction.' });
+    if (testingSetup && pathname === '/projects/new') return res.end('Project upload');
     if (pathname.startsWith('/api/org/firm/feed')) return json(res, { items: projects.map((project, index) => ({ id: project.id, type: 'project', data: { id: project.id, title: project.title, heroImage: '/photo.png', storyHref: index < 3 ? '/p/' + project.id : null } })) });
     if (pathname.startsWith('/api/')) return json(res, { members: [], requests: [] });
-    if (pathname.endsWith('/settings') || pathname === '/org/firm' || pathname === '/onboarding/workspace') {
-      res.setHeader('Content-Type', 'text/html'); return res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script>window.fixture=${JSON.stringify({ org, appearance: saved, projects, projectCount: 4, role })}</script><script src="/bundle.js"></script></body></html>`);
+    if (pathname.endsWith('/settings') || pathname.startsWith('/org/firm') || pathname === '/onboarding/workspace') {
+      res.setHeader('Content-Type', 'text/html'); return res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script>window.fixture=${JSON.stringify({ org: testingSetup ? newStudio : org, appearance: saved, projects, projectCount: 4, role, testingSetup })}</script><script src="/bundle.js"></script></body></html>`);
     }
     const file = /\/media\//.test(pathname) ? path.join(root, '.next/static/media', path.basename(pathname)) : path.join(out, path.basename(pathname));
     if (!fs.existsSync(file)) { res.writeHead(404); return res.end(); }
@@ -129,6 +156,39 @@ async function main() {
     setter.call(element, value); element.dispatchEvent(new Event('input', { bubbles: true })); element.dispatchEvent(new Event('change', { bubbles: true }));
   }, value);
   try {
+    testingSetup = true;
+    await page.setViewport({ width: 390, height: 844 });
+    await go('/org/firm');
+    assert.equal(await page.$eval('a', link => link.getAttribute('href')), '/onboarding/workspace?import=saved');
+    await button('Upload a project').click(); await page.waitForFunction(() => location.pathname === '/projects/new');
+    assert.equal(workspaceId, 'firm');
+    await go('/org/firm?tab=about'); await button('Write your bio').click();
+    await page.waitForSelector('textarea'); await edit('textarea', 'A studio in Miami.');
+    failSave = true; await button('Save bio').click(); await page.waitForSelector('[role=alert]');
+    assert.equal(await page.$eval('textarea', input => input.value), 'A studio in Miami.');
+    failSave = false; await button('Save bio').click(); await page.waitForSelector('a[href$="mode=import"]');
+    assert.deepEqual(lastProfilePatch, { description: 'A studio in Miami.' });
+    assert.ok(await page.evaluate(() => document.body.textContent.includes('A studio in Miami.')));
+    await button('Import a write-up').click(); await page.waitForSelector('input[type=url]');
+    await edit('input[type=url]', 'https://studio.test/about'); await button('Fetch').click();
+    await page.waitForFunction(() => document.querySelector('textarea')?.value === 'A previously published studio introduction.');
+    await button('Save as studio bio').click(); await page.waitForSelector('a[href$="mode=interview"]');
+    assert.deepEqual(lastProfilePatch, { description: 'A previously published studio introduction.' });
+    await button('Take the bio interview').click(); await page.waitForFunction(() => document.body.textContent.includes('Question 1 of'));
+    await go('/org/firm?tab=contact'); await button('Add contact details').click();
+    await page.waitForSelector('input[inputmode=url]'); await edit('input[inputmode=url]', 'studio.test');
+    await edit('textarea', 'South Florida\nNew York');
+    await button('Save contact details').click(); await page.waitForSelector('a[href="https://studio.test"]');
+    assert.deepEqual(lastProfilePatch, { website: 'studio.test', serviceRegions: ['South Florida', 'New York'] });
+    for (const viewer of ['VIEWER', null]) {
+      role = viewer;
+      for (const tab of ['feed', 'about', 'contact']) {
+        await go('/org/firm?tab=' + tab);
+        assert.doesNotMatch(await page.evaluate(() => document.body.textContent), /Upload a project|Import a write-up|Edit studio bio|Edit contact details/);
+      }
+    }
+    testingSetup = false; role = 'ADMIN';
+    console.log('PASS Empty studio recovery, correct upload workspace, import/manual/interview choices, contact saves, retry and read-only views.');
     for (const width of [1440, 768, 390, 320]) {
       await page.setViewport({ width, height: 1000 }); await go('/org/firm/settings');
       await page.waitForSelector('textarea');

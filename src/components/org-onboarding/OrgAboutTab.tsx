@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import forms from '@/components/ui/WorkflowForms.module.css';
 import { externalIdentityUrl } from '@/lib/seo/public';
 import { AddTeamMemberModal } from './AddTeamMemberModal';
 import { StudioDetailsModal } from './StudioDetailsModal';
@@ -55,6 +56,7 @@ interface OrgAboutTabProps {
   processPhases?: ProcessPhase[];
   recognition?: Recognition[];
   isOwner: boolean;
+  canEditBio?: boolean;
 }
 
 export function OrgAboutTab({
@@ -62,7 +64,8 @@ export function OrgAboutTab({
   team,
   processPhases = [],
   recognition = [],
-  isOwner
+  isOwner,
+  canEditBio = false,
 }: OrgAboutTabProps) {
   const [showAddTeamMember, setShowAddTeamMember] = useState(false);
   const [showStudioDetails, setShowStudioDetails] = useState(false);
@@ -82,7 +85,8 @@ export function OrgAboutTab({
     ['Memberships', org.memberships?.join(', ')], ['Certifications', org.certifications?.join(', ')],
   ].filter(([, value]) => value);
   const hasContent = Boolean(org.description || org.philosophy || team.length || processPhases.length || recognition.length || facts.length || website);
-  if (!hasContent && !isOwner) return <p className="folio-body text-folio-text-secondary">Studio details will appear here.</p>;
+  if (!hasContent && !isOwner && !canEditBio) return <p className="folio-body text-folio-text-secondary">Studio details will appear here.</p>;
+  const bioInterview = '/org/' + org.id + '/settings/about-interview';
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
@@ -90,6 +94,14 @@ export function OrgAboutTab({
         <div className="space-y-9 md:col-span-2">
           {org.description && <section><h2 className="folio-h3 mb-3">About the studio</h2>
             <p className="folio-body max-w-prose whitespace-pre-line">{org.description}</p></section>}
+          {canEditBio && <section aria-label="Studio bio">
+            {!org.description?.trim() && <h2 className="folio-h2 mb-5">Introduce your studio</h2>}
+            <div className={forms.actions}>
+              <Link className={forms.primary} href={bioInterview + '?mode=import'}>Import a write-up</Link>
+              <Link className={forms.secondary} href={'/org/' + org.id + '/edit?section=about'}>{org.description?.trim() ? 'Edit studio bio' : 'Write your bio'}</Link>
+              <Link className={forms.secondary} href={bioInterview + '?mode=interview'}>Take the bio interview</Link>
+            </div>
+          </section>}
           {org.philosophy && org.philosophy !== org.description && <blockquote className="folio-h3 max-w-prose italic">{org.philosophy}</blockquote>}
           {!!team.length && <section><h2 className="folio-h3 mb-4">Team</h2>
             <ul className="grid gap-6 sm:grid-cols-2">{team.map(member => <li key={member.id} className="flex items-start gap-4">
@@ -112,7 +124,7 @@ export function OrgAboutTab({
       {isOwner && <details className="border-t border-folio-border-subtle">
         <summary className="folio-ui py-3 cursor-pointer">Edit About section</summary>
         <div className="flex flex-wrap gap-x-6 folio-ui underline underline-offset-4">
-          <Link className="py-3" href={'/org/' + org.id + '/settings/about-interview'}>Studio bio interview</Link>
+          {!canEditBio && <Link className="py-3" href={bioInterview}>Studio bio interview</Link>}
           <button className="py-3" onClick={() => setShowStudioDetails(true)}>Studio details</button>
           <button className="py-3" onClick={() => setShowAddTeamMember(true)}>Add team member</button>
           <button className="py-3" onClick={() => setShowProcessBuilder(true)}>Edit process</button>
