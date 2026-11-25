@@ -48,7 +48,8 @@ export function extractWebsitePage(html: string, url: string, personName = '') {
     if (excluded.test(pathname) || /\.(pdf|zip|jpg|png|svg|mp4)$/i.test(pathname)) return;
     const label = (clean($(anchor).text()) || clean($(anchor).attr('aria-label') || $(anchor).find('img').attr('alt') || '')).slice(0, 160);
     let kind: ImportPage['kind'] | undefined;
-    if (personName && label.toLowerCase().includes(personName.toLowerCase())) kind = 'bio';
+    if (/^\/instagram$/i.test(pathname)) kind = 'social';
+    else if (personName && label.toLowerCase().includes(personName.toLowerCase())) kind = 'bio';
     else if (/\/(?:about|studio|our-story|about-us|team|people|founders|leadership)(?:\/|$)/i.test(pathname)) kind = 'about';
     else if (portfolio.test(pathname)) {
       const parts = pathname.split('/').filter(Boolean);
@@ -75,9 +76,23 @@ export function extractWebsitePage(html: string, url: string, personName = '') {
   if (!images.length) addImage($('meta[property="og:image"]').attr('content'));
   // Suggestions require team-page or textual portrait context. Never infer names from faces.
   const teamPage = /\/(?:about|studio|our-story|about-us|team|people|founders|leadership)(?:\/|$)/i.test(new URL(url).pathname);
-  const portraitWords = /\b(founder|co-founder|portrait|headshot|principal|our team|meet the team)\b/i;
+  if (teamPage) {
+    for (const node of structured.filter(item => item['@type'] === 'Person')) {
+      const photo = node.image as string | { url?: string; contentUrl?: string } | undefined;
+      addImage(typeof photo === 'string' ? photo : photo?.url || photo?.contentUrl, 'Team portrait');
+    }
+    $('[style*="background"], img, picture source[srcset]').each((_, node) => {
+      const element = $(node);
+      if (element.closest('nav,footer,header').length) return;
+      const src = element.attr('style')?.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/i)?.[1] ||
+        element.attr('data-src') || element.attr('srcset')?.split(',').pop()?.trim().split(/\s+/)[0] || element.attr('src');
+      addImage(src, element.attr('alt') || element.attr('aria-label'));
+    });
+  }
+  const portraitWords = /\b(founders?|co-founders?|portraits?|headshots?|principals?|our team|meet the team)\b/i;
   const portraitCandidates = images.filter(image => portraitWords.test(image.alt) ||
     (teamPage && !/\b(kitchen|bedroom|bathroom|living room|dining room|project|interior|exterior)\b/i.test(image.alt)))
+    .sort((a, b) => Number(portraitWords.test(b.alt)) - Number(portraitWords.test(a.alt)))
     .slice(0, 8).map(image => ({ url: image.url, sourceUrl: url,
       label: image.alt && !/^(image|photo|img)[\s\d-]*$/i.test(image.alt) ? image.alt.slice(0, 160) : 'Studio photograph' }));
   const instagramLinks = $('a[href]').toArray().flatMap(anchor => {
@@ -98,5 +113,6 @@ export function extractWebsitePage(html: string, url: string, personName = '') {
     personalBio: person && typeof person.description === 'string' ? clean(person.description).slice(0, 4000) :
       personName && title.toLowerCase().includes(personName.toLowerCase()) ? text : undefined,
     links, portraitCandidates, instagramUrl: instagramLinks[0],
+    socialProfileImage: /^((www|m)\.)?instagram\.com$/i.test(new URL(url).hostname) ? resolve($('meta[property="og:image"]').attr('content'), url) : undefined,
     images: images.slice(0, IMPORT_LIMITS.photos), imageCount: images.length };
 }

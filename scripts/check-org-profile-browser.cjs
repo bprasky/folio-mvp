@@ -35,6 +35,7 @@ if(location.pathname === '/onboarding/workspace') {
   const imported = [20, 3, 2].map((count, i) => ({id:'draft-'+i, title:'Draft '+i, isPublic:false, description:null,
     photos:Array.from({length:count}, (_, j) => ({url:'/photo.png', alt:'Room '+j}))}));
   return <WorkspaceReadyPreview profile={{...d, cover:null}} projects={imported} importId="import" canEditProfile canContribute
+    importedPortrait={{originalUrl:'/photo.png',cutoutUrl:'/photo.png',treatment:'cutout',position:50,scale:100,caption:''}}
     busy={false} description="" location="" onOpenProject={(id, review) => {window.openedProject={id,review}}}>{null}</WorkspaceReadyPreview>;
 }
 return location.pathname.endsWith('/settings') ? <Settings/> : <div className={styles.page} style={profilePageStyle(d.appearance.backgroundColor)}>
@@ -223,8 +224,10 @@ async function main() {
     assert.equal(saved.portrait.treatment, 'original', 'cancel preserves the saved portrait');
     await button('Edit cover').click(); await page.waitForSelector('[role=dialog]'); await button('Remove portrait').click(); await button('Save cover').click();
     await page.waitForFunction(() => !document.querySelector('[role=dialog]')); assert.equal(saved.portrait, null);
+    saved = structuredClone(initial);
     await page.setViewport({ width: 390, height: 844 }); await go('/onboarding/workspace?import=import');
-    await button('Add studio portrait').click();
+    await page.waitForSelector('figure img[src="/photo.png"]');
+    await button('Change portrait').click();
     const portraitInput = await page.waitForSelector('[role=dialog] input[type=file]');
     await portraitInput.uploadFile(path.join(out, 'photo.png'));
     await page.waitForFunction(() => document.body.textContent.includes('Cutout ready.'));
@@ -232,7 +235,12 @@ async function main() {
     await page.waitForFunction(() => !document.querySelector('[role=dialog]') && document.querySelector('figure'));
     assert.equal(saved.portrait.originalUrl, 'https://storage.test/upload.png');
     await go('/onboarding/workspace?import=import');
-    await page.waitForFunction(() => document.body.textContent.includes('Edit studio portrait'));
+    await page.waitForFunction(() => document.body.textContent.includes('Change portrait'));
+    await button('Change portrait').click(); await button('Remove portrait').click(); await button('Save portrait').click();
+    await page.waitForFunction(() => !document.querySelector('[role=dialog]'));
+    await go('/onboarding/workspace?import=import');
+    assert.equal(await page.$('figure'), null);
+    assert.ok(await page.evaluate(() => document.body.textContent.includes('Add studio portrait')));
     const card = '[data-testid="mosaic-card-link"]';
     assert.equal((await page.$$(card)).length, 12);
     assert.deepEqual(await page.$$eval(card, nodes => nodes.slice(0, 3).map(n => n.getAttribute('aria-label'))),

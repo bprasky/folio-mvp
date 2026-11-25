@@ -1356,3 +1356,7 @@ A fresh Prisma schema hid that commerce orders are not provisioned in production
 ## 2026-11-24 - Diagnose the first import from the private preview
 
 A docked developer panel narrows the effective viewport. Verify the project IDs, source titles, card ordering and owner actions on the reported import screen before changing responsive breakpoints.
+
+## 2026-11-24 - Compose the first studio cover during import
+
+The designer should open a recognizable, shareable studio cover. Put a discovered founder or team portrait in the private preview and offer Change portrait. Keep deliberate removals and replacements authoritative.

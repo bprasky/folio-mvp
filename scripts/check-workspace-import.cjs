@@ -15,7 +15,7 @@ const env = { CRON_SECRET: 'synthetic-cron', RESEND_API_KEY: 'synthetic-resend',
 class Clock extends Date { constructor(...args) { super(...(args.length ? args : [now])); } static now() { return now; } }
 const html = {
   '/': '<html><header><img src="/logo.png" alt="Studio logo"></header><main><h1>North Studio</h1><p>A small architecture practice creating thoughtful places for everyday life.</p><a href="/about">About</a><a href="/work">Projects</a><a href="/team/jane">Jane Designer</a></main></html>',
-  '/about': '<main><h1>About North Studio</h1><p>We are an architecture practice shaped by light, materials, and the way people live.</p></main>',
+  '/about': '<main><h1>About North Studio</h1><p>We are an architecture practice shaped by light, materials, and the way people live.</p><img src="/team.png" alt="Studio founders"></main>',
   '/team/jane': '<main><h1>Jane Designer</h1><p>Jane studied architecture and established a practice focused on generous, adaptable homes.</p></main>',
   '/work': '<main><a href="/work/harbor">Harbor House</a><a href="/work/court">Court House</a></main>',
   '/work/harbor': '<header><h1>North Studio</h1></header><main><p>The home opens toward the harbor through a sequence of bright, connected rooms.</p><img src="/harbor.png" alt="Harbor living room"></main>',
@@ -72,6 +72,10 @@ function load(file) {
         },
       };
       if (name === '@/lib/storage') return { saveBufferToProjectStorage: async ({ projectId, storageId }) => ({ publicUrl: `/api/project-photos/${projectId}/${storageId}` }) };
+      if (name === '@/lib/server/org-portrait') return {
+        preparePortraitPhoto: async () => png, cutoutPortrait: async () => png, requirePortraitAdmin: async () => {},
+        storePortrait: async () => ({ url: 'https://studio.test/prepared-founder.png' }),
+      };
       if (name === '@/lib/posting/slug') return { makeSlug: (_title, id) => id };
       if (name === '@/lib/authz/access') return { assertProjectWrite: async (actor, id) => assert.equal((await db.project.findUniqueOrThrow({ where: { id } })).ownerId, actor) };
       if (name === '@/lib/interview/guided/store') return guidedStore;
@@ -182,6 +186,12 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.equal(new Set(cards.map(c => c.id)).size, cards.length);
   const longPreview = renderPreview({ projects: unevenProjects, canEditProfile: true });
   assert.match(longPreview, /Add studio portrait/);
+  const importedPortrait = { originalUrl: '/founders.png', cutoutUrl: null, treatment: 'original', position: 50, scale: 100, caption: '' };
+  const firstLook = renderPreview({ projects: [previewProject], canEditProfile: true, importedPortrait });
+  assert.match(firstLook, /Change portrait/);
+  assert.match(firstLook, /founders\.png/);
+  assert.doesNotMatch(renderPreview({ projects: [previewProject], importedPortrait, profile: { ...previewProfile,
+    appearance: { ...previewProfile.appearance, portrait: null } } }), /founders\.png/);
   assert.doesNotMatch(preview, /Add studio portrait/);
   assert.doesNotMatch(longPreview, /Show \d+ more projects/);
   assert.equal((longPreview.match(/mosaic-card-link/g) || []).length, 12);
@@ -229,6 +239,8 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   await Promise.all([processor.processWorkspaceImports(), processor.processWorkspaceImports()]);
   let row = await rowFor(a); assert.equal(row.status, 'COMPLETED'); assert.equal(row.processingMeta.projects.length, 2);
   assert.equal(row.processingMeta.projects.find(p => p.url.endsWith('/harbor')).title, 'Harbor House');
+  assert.equal(row.processingMeta.profile.portrait?.treatment, 'cutout', 'portrait is available before the ready notification');
+  assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).profileAppearance?.portrait, undefined);
   assert.match(row.processingMeta.profile.logo || '', /^data:image\/png;base64,/, 'logo is decoded into a safe review candidate');
   assert.equal(await db.project.count(), 2); assert.equal(await db.projectImage.count(), 2); assert.equal(sends.length, 1); assert.equal(generations, 0, 'website import must not generate questions before material review');
   assert.ok(row.processingMeta.projects.every(p => !p.preparation));

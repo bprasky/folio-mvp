@@ -9,9 +9,10 @@ import OrgProfileHero from './OrgProfileHero';
 import PortraitControls from './PortraitControls';
 import styles from './OrgProfileAppearance.module.css';
 
-export default function OrgCoverEditor({ orgId, importId, previewCover, portraitAction, onSaved }: {
+export default function OrgCoverEditor({ orgId, importId, previewCover, portraitAction, importedPortrait, onSaved }: {
   orgId: string; importId?: string; previewCover?: ProfileCover; onSaved?: (appearance: OrgProfileAppearance, cover: ProfileCover) => void;
   portraitAction?: string;
+  importedPortrait?: OrgProfileAppearance['portrait'];
 }) {
   const [panel, setPanel] = useState<'cover' | 'portrait' | null>(null);
   const open = panel !== null;
@@ -26,10 +27,16 @@ export default function OrgCoverEditor({ orgId, importId, previewCover, portrait
     if (!open) return;
     const request = new AbortController(); setData(null); setDraft(null); setError('');
     fetch(`/api/orgs/${orgId}/appearance`, { cache: 'no-store', signal: request.signal })
-      .then(async response => { const body = await response.json(); if (!response.ok) throw new Error(body.error); if (!request.signal.aborted) { setData(body); setDraft(body.appearance); } })
+      .then(async response => {
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error);
+        if (request.signal.aborted) return;
+        setData(body);
+        setDraft(body.appearance.portrait === undefined && importedPortrait ? { ...body.appearance, portrait: importedPortrait } : body.appearance);
+      })
       .catch(reason => { if (!request.signal.aborted) setError(reason.message || 'Could not load your cover.'); });
     return () => request.abort();
-  }, [open, orgId, retry]);
+  }, [open, orgId, retry, importedPortrait]);
   async function save() {
     if (!draft) return;
     setSaving(true); setError('');

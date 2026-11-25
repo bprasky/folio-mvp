@@ -1721,3 +1721,10 @@ Validation checkpoint: all 13 real PostgreSQL deletion tests pass, including the
 - [x] Verify uneven project sizes, older drafts, editor access, and scroll behavior.
 
 Local checks passed for import, publication, portrait handling, and the preview DOM with 25 photos across three projects. The DOM check exercised the scroll observer, project selection, portrait upload and saving. Hosted Chromium covers actual scrolling.
+
+## First-import studio portrait
+
+- [x] Prepare a founder or team photograph during import and show it on the private cover.
+- [x] Open the prefilled portrait in the editor and honor saved replacements and removals.
+- [x] Include the reviewed cover portrait when the owner publishes the imported projects.
+- [x] Exercise import, fallback, consent, retry and publication behavior with isolated fixtures.

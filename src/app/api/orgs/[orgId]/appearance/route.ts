@@ -32,7 +32,7 @@ function ownedUpload(url: string, orgId: string): boolean {
     const prefix = `/storage/v1/object/public/user-avatars/org-profile/${encodeURIComponent(orgId)}/`;
     return parsed.origin === new URL(origin).origin && !parsed.search && !parsed.hash &&
       parsed.pathname.startsWith(prefix) &&
-      /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\.(png|jpg)$/.test(parsed.pathname.slice(prefix.length));
+      /^[a-f0-9]{8}-[a-f0-9]{4}-[45][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}\.(png|jpg)$/.test(parsed.pathname.slice(prefix.length));
   } catch { return false; }
 }
 

@@ -1,4 +1,5 @@
 import type { GuidedPreparation } from '@/lib/interview/guided/types';
+import type { OrgProfileAppearance } from '@/lib/org-profile-appearance';
 
 export const WORKSPACE_IMPORT_KIND = 'workspace-import-v1';
 export const IMPORT_LIMITS = { pages: 18, projects: 10, photos: 30 } as const;
@@ -20,6 +21,8 @@ export type WorkspacePreviewProject = {
   photos: Array<{ url: string; alt: string; width?: number; height?: number }>;
 };
 export type ProfileDraft = {
+  portrait?: NonNullable<OrgProfileAppearance['portrait']>;
+  triedPortraitIds?: string[];
   portraitCandidates?: Array<{ id: string; url: string; sourceUrl: string; label: string }>;
   instagramUrl?: string;
   description: string; location: string; website: string; foundedYear?: number;
@@ -55,7 +58,7 @@ export function importSummary(run: WorkspaceImport) {
   const projects = run.projects.filter(project => project.projectId);
   return { projects: projects.length, photos: projects.reduce((sum, project) => sum + project.photos.filter(photo => photo.status === 'saved').length, 0),
     interviews: projects.filter(project => project.status === 'ready' && project.preparation).length,
-    business: run.sections.includes('business') && !!(run.profile.description || run.profile.logo),
+    business: run.sections.includes('business') && !!(run.profile.description || run.profile.logo || run.profile.portrait),
     bio: run.sections.includes('bio') && !!run.profile.bio,
     needsAttention: run.notices.length > 0 || run.pages.some(page => page.status === 'failed') || run.projects.some(project => project.status === 'failed' || project.photos.some(photo => photo.status === 'failed')) };
 }

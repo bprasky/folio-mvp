@@ -18,6 +18,7 @@ type Props = {
   onOpenProject: (id: string, reviewPhotos: boolean) => void;
   children: ReactNode;
   importId?: string; canEditProfile?: boolean;
+  importedPortrait?: OrgProfileAppearance['portrait'];
 };
 
 // Only used for automatic covers in this owner-only preview. Saved appearance
@@ -43,12 +44,14 @@ export function workspacePhotoCards(projects: WorkspacePreviewProject[], canCont
   return rounds.flat();
 }
 
-export function WorkspaceReadyPreview({ profile, description, location, logo, projects, busy, canContribute, canEditProfile = false, importId, onOpenProject, children }: Props) {
+export function WorkspaceReadyPreview({ profile, description, location, logo, projects, busy, canContribute, canEditProfile = false, importId, importedPortrait, onOpenProject, children }: Props) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [tab, setTab] = useState<'feed' | 'about'>('feed');
   const [savedAppearance, setSavedAppearance] = useState<OrgProfileAppearance | null>(null);
   const [savedCover, setSavedCover] = useState<ProfileCover>(null);
-  const appearance = savedAppearance || profile.appearance;
+  const current = savedAppearance || profile.appearance;
+  // A saved null records the owner's decision to remove the portrait.
+  const appearance = current.portrait === undefined && importedPortrait ? { ...current, portrait: importedPortrait } : current;
   const automaticCover = workspaceCover(projects);
   const cover = appearance.cover.kind === 'auto' && automaticCover ? automaticCover : appearance.cover.kind === 'none' ? null : savedAppearance ? savedCover : profile.cover;
   const org = { ...profile.org, description, location, logo: logo ?? null };
@@ -79,7 +82,7 @@ export function WorkspaceReadyPreview({ profile, description, location, logo, pr
     </div>
     <OrgProfileHero org={org} appearance={appearance} cover={cover}
       tools={<div className={profileStyles.inlineControls}>
-        {canEditProfile && <OrgCoverEditor orgId={org.id} importId={importId} portraitAction={appearance.portrait ? 'Edit studio portrait' : 'Add studio portrait'} previewCover={automaticCover || null} onSaved={(nextAppearance, nextCover) => { setSavedAppearance(nextAppearance); setSavedCover(nextCover); }} />}
+        {canEditProfile && <OrgCoverEditor orgId={org.id} importId={importId} importedPortrait={importedPortrait} portraitAction={appearance.portrait ? 'Change portrait' : 'Add studio portrait'} previewCover={automaticCover || null} onSaved={(nextAppearance, nextCover) => { setSavedAppearance(nextAppearance); setSavedCover(nextCover); }} />}
         <button type="button" className={profileStyles.manageTrigger} onClick={() => setReviewOpen(true)}>Review &amp; publish</button>
       </div>}
       projectCount={profile.projectCount + projects.filter(project => !project.isPublic).length} year={new Date().getFullYear()} preview />
